@@ -1,0 +1,6 @@
+OpenAI — Backend Engineer, API Platform (San Francisco / Remote)
+
+Build the systems that serve the OpenAI API to millions of developers. Python,
+async, distributed systems, hard latency targets. You should be comfortable
+profiling production code, designing for graceful degradation, and pairing
+with research engineers to land new model launches without downtime.

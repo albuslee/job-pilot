@@ -1,0 +1,7 @@
+Canva — Senior Fullstack Engineer (Sydney / Remote AU)
+
+You will own end-to-end features across our editor and platform: TypeScript +
+React on the frontend, Python services on the backend, and AWS infrastructure
+under the hood. We're shipping AI-powered features and care about people who
+have built RAG / LLM-touching products in production. Strong testing culture,
+ownership-first.

@@ -1,0 +1,6 @@
+Anthropic — Research Engineer, Agents (San Francisco)
+
+Help us build agents that can reliably take actions in the world. Strong
+Python, deep familiarity with LLM tool use, evaluation harnesses, prompt
+engineering. Bonus: experience with multi-agent orchestration, memory, and
+long-running task execution.
