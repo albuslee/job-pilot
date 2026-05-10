@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Tooling artefacts
+dist/
+build/
+
+# Project
+data/profile/
+output/
+.chroma/
+*.docx~
+
+# Env
+.env
+.env.*
+!.env.example
