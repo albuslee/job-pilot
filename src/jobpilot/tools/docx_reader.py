@@ -9,6 +9,8 @@ from pathlib import Path
 from docx import Document
 
 _HEADING_RE = re.compile(r"^Heading\s+(\d+)$")
+# Heuristic: short all-caps lines with no sentence punctuation are section headers
+_HEURISTIC_HEADING_RE = re.compile(r"^[A-Z][A-Z\s&/\-]{2,39}$")
 
 
 @dataclass(frozen=True)
@@ -30,8 +32,9 @@ def read_docx(path: Path) -> list[DocxBlock]:
             continue
         style_name = para.style.name if para.style is not None else ""
         match = _HEADING_RE.match(style_name or "")
-        if match:
-            level = int(match.group(1))
+        is_heuristic = not match and bool(_HEURISTIC_HEADING_RE.match(text))
+        if match or is_heuristic:
+            level = int(match.group(1)) if match else 1
             while stack and stack[-1][0] >= level:
                 stack.pop()
             stack.append((level, text))

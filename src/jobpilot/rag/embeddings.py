@@ -31,12 +31,30 @@ class _OpenAIEmbedder:
         return [list(item.embedding) for item in result.data]
 
 
+class _OllamaEmbedder:
+    def __init__(self, sdk: Any, model: str) -> None:
+        self._sdk = sdk
+        self._model = model
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        result = self._sdk.embeddings.create(model=self._model, input=texts)
+        return [list(item.embedding) for item in result.data]
+
+
 def build_embedder(
     *,
     settings: Settings,
     voyage_sdk: Any | None = None,
     openai_sdk: Any | None = None,
+    ollama_sdk: Any | None = None,
 ) -> Embedder:
+    if settings.embedding_provider == "ollama":
+        if ollama_sdk is None:
+            from openai import OpenAI
+
+            ollama_sdk = OpenAI(base_url=f"{settings.ollama_base_url}/v1", api_key="ollama")
+        return _OllamaEmbedder(ollama_sdk, settings.ollama_embedding_model)
+
     if settings.embedding_provider == "voyage":
         if voyage_sdk is None:
             import voyageai
