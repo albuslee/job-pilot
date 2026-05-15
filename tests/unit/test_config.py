@@ -6,26 +6,36 @@ from jobpilot.config import Settings
 
 
 def test_settings_load_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    monkeypatch.setenv("LITELLM_BASE_URL", "http://localhost:4000/v1")
+    monkeypatch.setenv("LITELLM_API_KEY", "my-token")
     monkeypatch.setenv("EMBEDDING_PROVIDER", "openai")
     monkeypatch.setenv("OPENAI_API_KEY", "oa-test")
     monkeypatch.setenv("SCORE_THRESHOLD", "65")
     s = Settings()
-    assert s.anthropic_api_key == "sk-test"
+    assert s.litellm_api_key == "my-token"
     assert s.embedding_provider == "openai"
     assert s.score_threshold == 65
 
 
-def test_settings_voyage_default_provider(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
-    monkeypatch.setenv("VOYAGE_API_KEY", "vy-test")
+def test_settings_ollama_default_provider(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("EMBEDDING_PROVIDER", raising=False)
+    s = Settings()
+    assert s.embedding_provider == "ollama"
+    assert s.ollama_base_url == "http://localhost:11434"
+    assert s.ollama_embedding_model == "nomic-embed-text"
+
+
+def test_settings_voyage_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "voyage")
+    monkeypatch.setenv("VOYAGE_API_KEY", "vy-test")
     s = Settings()
     assert s.embedding_provider == "voyage"
     assert s.voyage_api_key == "vy-test"
 
 
-def test_settings_missing_anthropic_key_raises(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    with pytest.raises(ValueError):
-        Settings(_env_file=None)  # type: ignore[call-arg]
+def test_settings_litellm_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LITELLM_BASE_URL", raising=False)
+    monkeypatch.delenv("LITELLM_API_KEY", raising=False)
+    s = Settings(_env_file=None)  # type: ignore[call-arg]
+    assert s.litellm_base_url == "http://localhost:4000/v1"
+    assert s.litellm_api_key == "no-key"

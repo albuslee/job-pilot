@@ -1,23 +1,38 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 from unittest.mock import MagicMock
 
 from jobpilot.config import Settings
-from jobpilot.llm.client import AnthropicClient
+from jobpilot.llm.client import LLMClient, AnthropicClient  # AnthropicClient is an alias
 from jobpilot.models.schemas import EvaluationResult
 
 
-class _FakeToolUseBlock:
+class _FakeFunction:
     def __init__(self, name: str, payload: dict[str, Any]) -> None:
-        self.type = "tool_use"
         self.name = name
-        self.input = payload
+        self.arguments = json.dumps(payload)
+
+
+class _FakeToolCall:
+    def __init__(self, name: str, payload: dict[str, Any]) -> None:
+        self.function = _FakeFunction(name, payload)
 
 
 class _FakeMessage:
-    def __init__(self, blocks: list[Any]) -> None:
-        self.content = blocks
+    def __init__(self, tool_calls: list[_FakeToolCall]) -> None:
+        self.tool_calls = tool_calls
+
+
+class _FakeChoice:
+    def __init__(self, tool_calls: list[_FakeToolCall]) -> None:
+        self.message = _FakeMessage(tool_calls)
+
+
+class _FakeResponse:
+    def __init__(self, tool_calls: list[_FakeToolCall]) -> None:
+        self.choices = [_FakeChoice(tool_calls)]
 
 
 def test_client_requests_structured_output_via_tool(settings: Settings) -> None:
@@ -29,15 +44,15 @@ def test_client_requests_structured_output_via_tool(settings: Settings) -> None:
         "risk_flags": [],
     }
     sdk = MagicMock()
-    sdk.messages.create.return_value = _FakeMessage(
-        [_FakeToolUseBlock("submit_evaluation", fake_payload)]
+    sdk.chat.completions.create.return_value = _FakeResponse(
+        [_FakeToolCall("submit_evaluation", fake_payload)]
     )
-    client = AnthropicClient(settings=settings, sdk=sdk)
+    client = LLMClient(settings=settings, sdk=sdk)
 
     result = client.complete_structured(
         system="system prompt",
         user="user prompt",
-        cached_context="profile context to cache",
+        cached_context="profile context",
         schema=EvaluationResult,
         tool_name="submit_evaluation",
         tool_description="Submit your evaluation.",
@@ -47,29 +62,23 @@ def test_client_requests_structured_output_via_tool(settings: Settings) -> None:
     assert result.score == 78
     assert result.decision == "apply"
 
-    call_kwargs = sdk.messages.create.call_args.kwargs
-    assert call_kwargs["model"] == settings.anthropic_model
-    # System is sent as a list of blocks with cache_control on the system prompt.
-    system_blocks = call_kwargs["system"]
-    assert any(
-        isinstance(b, dict) and b.get("cache_control", {}).get("type") == "ephemeral"
-        for b in system_blocks
-    )
-    # Cached context should appear as the first user content block, also cached.
-    user_msg = call_kwargs["messages"][0]
-    assert user_msg["role"] == "user"
-    cached_block = user_msg["content"][0]
-    assert cached_block["text"] == "profile context to cache"
-    assert cached_block["cache_control"] == {"type": "ephemeral"}
-    # tool_choice forces the model into the right tool.
-    assert call_kwargs["tool_choice"] == {"type": "tool", "name": "submit_evaluation"}
+    call_kwargs = sdk.chat.completions.create.call_args.kwargs
+    assert call_kwargs["model"] == settings.llm_model
+    messages = call_kwargs["messages"]
+    assert messages[0] == {"role": "system", "content": "system prompt"}
+    assert messages[1] == {"role": "user", "content": "profile context"}
+    assert messages[-1] == {"role": "user", "content": "user prompt"}
+    tool = call_kwargs["tools"][0]
+    assert tool["type"] == "function"
+    assert tool["function"]["name"] == "submit_evaluation"
+    assert call_kwargs["tool_choice"] == {"type": "function", "function": {"name": "submit_evaluation"}}
 
 
-def test_client_skips_cache_block_when_no_cached_context(settings: Settings) -> None:
+def test_client_skips_context_messages_when_no_cached_context(settings: Settings) -> None:
     sdk = MagicMock()
-    sdk.messages.create.return_value = _FakeMessage(
+    sdk.chat.completions.create.return_value = _FakeResponse(
         [
-            _FakeToolUseBlock(
+            _FakeToolCall(
                 "submit_evaluation",
                 {
                     "score": 10,
@@ -81,7 +90,7 @@ def test_client_skips_cache_block_when_no_cached_context(settings: Settings) -> 
             )
         ]
     )
-    client = AnthropicClient(settings=settings, sdk=sdk)
+    client = LLMClient(settings=settings, sdk=sdk)
     client.complete_structured(
         system="s",
         user="u",
@@ -90,6 +99,11 @@ def test_client_skips_cache_block_when_no_cached_context(settings: Settings) -> 
         tool_name="submit_evaluation",
         tool_description="d",
     )
-    user_msg = sdk.messages.create.call_args.kwargs["messages"][0]
-    assert len(user_msg["content"]) == 1
-    assert user_msg["content"][0]["text"] == "u"
+    messages = sdk.chat.completions.create.call_args.kwargs["messages"]
+    assert len(messages) == 2
+    assert messages[0] == {"role": "system", "content": "s"}
+    assert messages[1] == {"role": "user", "content": "u"}
+
+
+def test_anthropic_client_alias(settings: Settings) -> None:
+    assert AnthropicClient is LLMClient

@@ -1,16 +1,19 @@
-"""Thin Anthropic SDK wrapper.
+"""LLM client backed by any OpenAI-compatible gateway (e.g. LiteLLM).
 
 Owns:
-- prompt caching: system prompt + (optional) retrieved-context block both marked ephemeral.
-- structured output: a single tool call whose input_schema is a Pydantic model.
+- structured output: a single tool call whose parameters schema is a Pydantic model.
 - retries: tenacity exponential backoff on transient errors.
+
+Note: Anthropic-style prompt caching is not forwarded — LiteLLM handles caching
+at the gateway level based on its own configuration.
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any, TypeVar
 
-from anthropic import Anthropic, APIConnectionError, APIStatusError, RateLimitError
+from openai import APIConnectionError, APIStatusError, OpenAI, RateLimitError
 from pydantic import BaseModel
 from tenacity import (
     retry,
@@ -33,10 +36,13 @@ class StructuredOutputError(RuntimeError):
 _RETRY_EXC = (APIConnectionError, RateLimitError, APIStatusError)
 
 
-class AnthropicClient:
+class LLMClient:
     def __init__(self, *, settings: Settings, sdk: Any | None = None) -> None:
         self._settings = settings
-        self._sdk: Any = sdk or Anthropic(api_key=settings.anthropic_api_key)
+        self._sdk: Any = sdk or OpenAI(
+            base_url=settings.litellm_base_url,
+            api_key=settings.litellm_api_key,
+        )
 
     @retry(
         retry=retry_if_exception_type(_RETRY_EXC),
@@ -56,48 +62,37 @@ class AnthropicClient:
         max_tokens: int = 2048,
     ) -> T:
         """Force the model to emit a single tool call whose input parses into `schema`."""
-
-        system_blocks: list[dict[str, Any]] = [
-            {
-                "type": "text",
-                "text": system,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ]
-
-        user_content: list[dict[str, Any]] = []
+        messages: list[dict[str, Any]] = [{"role": "system", "content": system}]
         if cached_context:
-            user_content.append(
-                {
-                    "type": "text",
-                    "text": cached_context,
-                    "cache_control": {"type": "ephemeral"},
-                }
-            )
-        user_content.append({"type": "text", "text": user})
+            messages.append({"role": "user", "content": cached_context})
+            messages.append({"role": "assistant", "content": "Understood."})
+        messages.append({"role": "user", "content": user})
 
-        tool = {
-            "name": tool_name,
-            "description": tool_description,
-            "input_schema": schema.model_json_schema(),
+        tool: dict[str, Any] = {
+            "type": "function",
+            "function": {
+                "name": tool_name,
+                "description": tool_description,
+                "parameters": schema.model_json_schema(),
+            },
         }
 
-        log.debug("anthropic.request", model=self._settings.anthropic_model, tool=tool_name)
-        response = self._sdk.messages.create(
-            model=self._settings.anthropic_model,
+        log.debug("llm.request", model=self._settings.llm_model, tool=tool_name)
+        response = self._sdk.chat.completions.create(
+            model=self._settings.llm_model,
             max_tokens=max_tokens,
-            system=system_blocks,
-            messages=[{"role": "user", "content": user_content}],
+            messages=messages,
             tools=[tool],
-            tool_choice={"type": "tool", "name": tool_name},
+            tool_choice={"type": "function", "function": {"name": tool_name}},
         )
 
-        for block in response.content:
-            if (
-                getattr(block, "type", None) == "tool_use"
-                and getattr(block, "name", None) == tool_name
-            ):
-                payload = getattr(block, "input", {})
-                return schema.model_validate(payload)
+        tool_calls = getattr(response.choices[0].message, "tool_calls", None)
+        if tool_calls:
+            payload = json.loads(tool_calls[0].function.arguments)
+            return schema.model_validate(payload)
 
-        raise StructuredOutputError(f"Model did not return a `{tool_name}` tool_use block.")
+        raise StructuredOutputError(f"Model did not return a `{tool_name}` tool call.")
+
+
+# Backwards-compatible alias
+AnthropicClient = LLMClient
