@@ -5,7 +5,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 from jobpilot.config import Settings
-from jobpilot.llm.client import LLMClient, AnthropicClient  # AnthropicClient is an alias
+from jobpilot.llm.client import AnthropicClient, LLMClient  # AnthropicClient is an alias
 from jobpilot.models.schemas import EvaluationResult
 
 
@@ -71,7 +71,10 @@ def test_client_requests_structured_output_via_tool(settings: Settings) -> None:
     tool = call_kwargs["tools"][0]
     assert tool["type"] == "function"
     assert tool["function"]["name"] == "submit_evaluation"
-    assert call_kwargs["tool_choice"] == {"type": "function", "function": {"name": "submit_evaluation"}}
+    assert call_kwargs["tool_choice"] == {
+        "type": "function",
+        "function": {"name": "submit_evaluation"},
+    }
 
 
 def test_client_skips_context_messages_when_no_cached_context(settings: Settings) -> None:
