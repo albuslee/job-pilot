@@ -1,0 +1,21 @@
+# Bullet pool template — pre-written bullets the tailor agent may SELECT from
+# for the candidate's CURRENT role. The tailor cannot generate new bullet text;
+# it can only pick IDs from this file.
+#
+# To use:
+#   1. cp data/bullet_pool.example.yaml data/bullet_pool.yaml
+#   2. Replace the placeholder entries below with your real bullets, one per
+#      genuine achievement. Stable IDs let you add alternative framings
+#      (impact-focused, leadership-focused, AI-focused, etc.) over time —
+#      the tailor will pick whichever variant best matches each JD.
+#   3. data/bullet_pool.yaml is gitignored; this .example template is committed.
+
+current_role:
+  - id: entry-impact
+    text: "Delivered a high-impact project that reduced X by Y% — quantify the result."
+  - id: entry-leadership
+    text: "Led a team of N engineers across multiple time zones to ship Z by <date>."
+  - id: entry-tech
+    text: "Architected a system handling N events/second on <technology stack>."
+  - id: entry-cross-functional
+    text: "Partnered with product / design / data to deliver <initiative> end-to-end."
