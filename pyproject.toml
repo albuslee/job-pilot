@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Multi-agent job-hunting assistant — Day 1 (evaluator + RAG)."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-authors = [{ name = "Albus Li", email = "albuslee@gmail.com" }]
+authors = [{ name = "JobPilot Maintainer" }]
 dependencies = [
     "anthropic>=0.40.0",
     "chromadb>=0.5.5",
@@ -17,6 +17,7 @@ dependencies = [
     "structlog>=24.4.0",
     "pyyaml>=6.0.2",
     "tenacity>=9.0.0",
+    "langgraph>=0.2.0",
 ]
 
 [project.scripts]
@@ -62,6 +63,10 @@ disallow_untyped_decorators = false
 
 [[tool.mypy.overrides]]
 module = ["chromadb.*", "voyageai.*", "docx.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["langgraph.*", "langchain_core.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

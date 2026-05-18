@@ -22,12 +22,12 @@ def test_job_description_minimal() -> None:
 def test_profile_chunk_requires_text_and_source() -> None:
     chunk = ProfileChunk(
         id="cv-001",
-        source="Albus_Li_CV.docx",
-        heading_path=["Experience", "Trend Micro"],
+        source="cv.docx",
+        heading_path=["Experience", "ACME Corp"],
         text="Built a multi-agent eval pipeline.",
     )
     assert chunk.id == "cv-001"
-    assert chunk.heading_path == ["Experience", "Trend Micro"]
+    assert chunk.heading_path == ["Experience", "ACME Corp"]
 
 
 def test_evaluation_result_decision_enum() -> None:
@@ -66,20 +66,58 @@ def test_evaluation_result_decision_rejects_unknown() -> None:
 
 def test_experience_block_round_trip() -> None:
     block = ExperienceBlock(
-        company="Trend Micro",
+        company="ACME Corp",
         title="Senior SWE",
         dates="2022 — present",
-        bullets=["Led the JobPilot prototype."],
+        bullets=["Led the prototype."],
     )
     assert block.bullets[0].startswith("Led")
 
 
-def test_tailored_cv_stub_constructs() -> None:
+def test_tailored_cv_minimal() -> None:
     cv = TailoredCV(
-        header="Albus Li — Senior Fullstack Engineer",
-        summary="Six years building distributed systems.",
-        experience=[],
-        skills=["Python", "TypeScript"],
-        education=["BSc CS"],
+        target_company="Canva",
+        target_role="Senior Fullstack Engineer",
+        summary="Senior engineer with 7+ years building AWS serverless platforms.",
+        skills_lines=[
+            "Languages: TypeScript, Python",
+            "AWS: Lambda, Step Functions, EventBridge",
+        ],
+        current_role_bullet_ids=["entry-impact", "entry-leadership"],
     )
-    assert cv.skills == ["Python", "TypeScript"]
+    assert cv.target_company == "Canva"
+    assert cv.skills_lines[0].startswith("Languages")
+    assert cv.current_role_bullet_ids == ["entry-impact", "entry-leadership"]
+
+
+def test_tailored_cv_requires_company_and_role() -> None:
+    with pytest.raises(ValidationError):
+        TailoredCV(
+            target_company="",
+            target_role="x",
+            summary="x",
+            skills_lines=["x"],
+            current_role_bullet_ids=["a"],
+        )
+
+
+def test_tailored_cv_requires_skills_lines_nonempty() -> None:
+    with pytest.raises(ValidationError):
+        TailoredCV(
+            target_company="x",
+            target_role="x",
+            summary="x",
+            skills_lines=[],
+            current_role_bullet_ids=["a"],
+        )
+
+
+def test_tailored_cv_requires_bullet_ids_nonempty() -> None:
+    with pytest.raises(ValidationError):
+        TailoredCV(
+            target_company="x",
+            target_role="x",
+            summary="x",
+            skills_lines=["x"],
+            current_role_bullet_ids=[],
+        )

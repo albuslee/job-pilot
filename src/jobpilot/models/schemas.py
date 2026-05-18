@@ -1,5 +1,5 @@
-"""Pydantic schemas for JobPilot. Day 1 covers JD, profile chunks, evaluator output;
-TailoredCV is included as a stub so Day 2's tailor can drop in without churn."""
+"""Pydantic schemas for JobPilot: JD, profile chunks, evaluator output, and the
+Day 2 TailoredCV (pool-based bullet IDs; no free-form bullet text by design)."""
 
 from __future__ import annotations
 
@@ -45,10 +45,12 @@ class ExperienceBlock(BaseModel):
 
 
 class TailoredCV(BaseModel):
-    """Day 2 will populate this. Defined now so AgentState's type is stable."""
+    """Day 2 tailor output. The schema deliberately exposes NO free-form bullet
+    field — current-role bullets are selected by ID from a fixed pool, making
+    bullet hallucination structurally impossible."""
 
-    header: str
-    summary: str
-    experience: list[ExperienceBlock] = Field(default_factory=list)
-    skills: list[str] = Field(default_factory=list)
-    education: list[str] = Field(default_factory=list)
+    target_company: str = Field(..., min_length=1)
+    target_role: str = Field(..., min_length=1)
+    summary: str = Field(..., min_length=1)
+    skills_lines: list[str] = Field(..., min_length=1)
+    current_role_bullet_ids: list[str] = Field(..., min_length=1)
