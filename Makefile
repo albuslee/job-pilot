@@ -1,4 +1,4 @@
-.PHONY: setup test lint typecheck ingest eval
+.PHONY: setup test test-all lint lint-fix typecheck ingest eval run
 
 setup:
 	uv sync
@@ -25,3 +25,7 @@ ingest:
 eval:
 	@if [ -z "$(JD)" ]; then echo "Usage: make eval JD=data/sample_jobs/canva_fullstack.txt"; exit 1; fi
 	uv run jobpilot eval $(JD)
+
+run:
+	@if [ -z "$(JD)" ]; then echo "Usage: make run JD=data/sample_jobs/canva_fullstack.txt"; exit 1; fi
+	uv run jobpilot run $(JD)

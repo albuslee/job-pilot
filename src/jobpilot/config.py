@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     profile_dir: Path = Path("data/profile")
     chroma_dir: Path = Path(".chroma")
     output_dir: Path = Path("output")
+    cv_template_path: Path = Path("data/cv_template.docx")
+    bullet_pool_path: Path = Path("data/bullet_pool.yaml")
+
+    # Personal identity — used only to compose output filenames and to locate
+    # the candidate's current-role section in their CV template. Defaults are
+    # placeholders; supply real values via .env.
+    owner_name: str = "Owner"
+    # Exact text in the CV template's current-role line. When empty, the tailor
+    # skips role-bullet replacement (only summary + skills are rewritten).
+    current_role_anchor: str = ""
 
     score_threshold: int = 70
     retrieval_k: int = 8
