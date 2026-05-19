@@ -1,4 +1,4 @@
-.PHONY: setup test test-all lint lint-fix typecheck ingest eval run
+.PHONY: setup test test-all lint lint-fix typecheck ingest eval run generate-pool
 
 setup:
 	uv sync
@@ -29,3 +29,8 @@ eval:
 run:
 	@if [ -z "$(JD)" ]; then echo "Usage: make run JD=data/sample_jobs/canva_fullstack.txt"; exit 1; fi
 	uv run jobpilot run $(JD)
+
+# Bootstrap data/bullet_pool.yaml from your CV template (one-time helper).
+# Refuses to clobber an existing pool file unless FORCE=1.
+generate-pool:
+	uv run python scripts/generate_bullet_pool.py $(if $(FORCE),--force,)

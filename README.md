@@ -52,9 +52,12 @@ cp .env.example .env                # fill in LITELLM_*, OWNER_NAME, CURRENT_ROL
 # you want as the tailor's structural template:
 cp data/profile/<your_cv>.docx data/cv_template.docx
 
-# Seed your bullet pool (gitignored). Start from the .example template:
-cp data/bullet_pool.example.yaml data/bullet_pool.yaml
-$EDITOR data/bullet_pool.yaml      # replace placeholders with your real bullets
+# Seed your bullet pool (gitignored). Two options:
+#   (a) Bootstrap from the bullets already in your CV template:
+make generate-pool                                  # → data/bullet_pool.yaml
+#   (b) Or start from a blank template:
+# cp data/bullet_pool.example.yaml data/bullet_pool.yaml
+$EDITOR data/bullet_pool.yaml      # rename IDs, add alternative framings
 
 make ingest                         # embed profile into ChromaDB
 make eval JD=data/sample_jobs/canva_fullstack.txt
@@ -93,8 +96,14 @@ All personal info lives in `.env` (gitignored). Key variables:
 | `make ingest` | Ingest `data/profile/` into ChromaDB |
 | `make eval JD=<path>` | Run evaluator against a job description |
 | `make run JD=<path>` | Evaluate + tailor (writes `output/<OWNER>_CV_<company>.docx` when score ≥ threshold) |
+| `make generate-pool` | **Bootstrap-only.** Seed `data/bullet_pool.yaml` from the bullets in `data/cv_template.docx` under `CURRENT_ROLE_ANCHOR`. Refuses to overwrite an existing pool; pass `FORCE=1` to override. |
 
 Or call the CLI directly: `uv run jobpilot {version,ingest,eval,run} ...`.
+
+> **Note on `generate-pool`:** this is a *one-time* helper. After bootstrap, edit
+> `data/bullet_pool.yaml` by hand — rename auto IDs to meaningful slugs and add
+> alternative framings. The tailor cannot reject what's in the pool, so human
+> review before each addition is the safety net.
 
 ## Hallucination guardrails
 
