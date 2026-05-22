@@ -125,6 +125,8 @@ def test_report_md_lists_errors(tmp_path: Path) -> None:
     assert "Errors (1)" in body
     assert "err" in body
     assert "RuntimeError" in body
+    # Errored records must not appear in Failures
+    assert "Failures (0)" in body
 
 
 def test_report_md_no_baseline_section(tmp_path: Path) -> None:

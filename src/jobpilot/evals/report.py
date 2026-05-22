@@ -13,6 +13,7 @@ import yaml
 from jobpilot.evals.metrics import EvalRecord, ScoredBatch
 
 if TYPE_CHECKING:
+    # TODO(Task 8): remove the type-ignore once compare.py exists.
     from jobpilot.evals.compare import ComparisonReport  # type: ignore[import-untyped]
 
 
@@ -110,6 +111,9 @@ def write_report_md(
         f"n_cases={agg.n_cases}\n"
     )
 
+    if (baseline is None) != (comparison is None):
+        raise ValueError("baseline and comparison must both be provided or both be None")
+
     if baseline is not None and comparison is not None:
         from jobpilot.evals.compare import render_comparison_section
         lines.append(render_comparison_section(baseline, scored, comparison))
@@ -169,4 +173,4 @@ def write_report_md(
             lines.append(f"- {rec.error.type}: {rec.error.message}")
             lines.append("")
 
-    out.write_text("\n".join(lines), encoding="utf-8")
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
