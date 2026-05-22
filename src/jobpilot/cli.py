@@ -141,3 +141,118 @@ def run_cmd(
     typer.echo(f"tailored CV → {output_path}")
     typer.echo(f"target: {tailored.target_company} / {tailored.target_role}")
     typer.echo(f"selected_bullets: {', '.join(tailored.current_role_bullet_ids)}")
+
+
+# ---- eval-batch ----------------------------------------------------------------
+
+
+@app.command(name="eval-batch")
+def eval_batch_cmd(
+    jobs_glob: str = typer.Argument("evals/jobs/*.txt"),
+    labels_dir: Path = typer.Option(Path("evals/labels"), "--labels-dir"),
+    prompt_version: str = typer.Option("v1", "--prompt-version"),
+    model: str | None = typer.Option(None, "--model"),
+    baseline: Path | None = typer.Option(None, "--baseline", exists=True, readable=True),
+    run_dir: Path | None = typer.Option(None, "--run-dir"),
+    with_tailor: bool = typer.Option(False, "--tailor/--no-tailor"),
+    fail_under: float | None = typer.Option(None, "--fail-under"),
+    prices_path: Path = typer.Option(Path("evals/model_prices.yaml"), "--prices"),
+    concurrency: int = typer.Option(1, "--concurrency", min=1, max=8),
+) -> None:
+    """Run the evaluator (and optionally tailor) over a labelled fixture set.
+
+    Writes evals/runs/<ts>/{results.jsonl, report.md, meta.yaml}. With --baseline,
+    the report also includes a Delta + Regressions section.
+    """
+    _ = concurrency  # reserved for future use
+
+    import asyncio
+    import subprocess
+    from datetime import UTC, datetime
+
+    from jobpilot.evals.compare import diff_runs, load_scored_batch
+    from jobpilot.evals.fixtures import load_eval_set
+    from jobpilot.evals.metrics import BatchConfig, ScoredBatch, aggregate
+    from jobpilot.evals.pricing import load_prices
+    from jobpilot.evals.report import (
+        write_meta_yaml,
+        write_report_md,
+        write_results_jsonl,
+    )
+    from jobpilot.evals.runner import run_batch
+
+    settings = get_settings()
+    configure_logging(settings.log_format)
+    if model:
+        settings = settings.model_copy(update={"llm_model": model})
+
+    cases = load_eval_set(jobs_glob=jobs_glob, labels_dir=labels_dir)
+    if not cases:
+        typer.echo("No labelled cases found.")
+        raise typer.Exit(code=1)
+
+    prices = load_prices(prices_path) if prices_path.exists() else None
+
+    store = _build_store()
+    llm = LLMClient(settings=settings)
+    evaluator = EvaluatorAgent(settings=settings, llm=llm, rag=store,
+                               prompt_version=prompt_version)
+    if with_tailor:
+        pool = load_bullet_pool(settings.bullet_pool_path)
+        tailor = TailorAgent(settings=settings, llm=llm, rag=store, pool=pool)
+        graph = build_graph(settings=settings, evaluator=evaluator, tailor=tailor)
+    else:
+        graph = build_graph(settings=settings, evaluator=evaluator, tailor=None)
+
+    records = asyncio.run(run_batch(
+        cases=cases, graph=graph, llm=llm,  # type: ignore[arg-type]
+        prompt_version=prompt_version, model=settings.llm_model, prices=prices,
+    ))
+
+    ts = datetime.now(UTC)
+    run_id = ts.strftime("%Y-%m-%dT%H-%M-%S")
+    out_dir = run_dir or (Path("evals/runs") / run_id)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        git_sha: str | None = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True,
+            timeout=2,
+        ).stdout.strip()
+    except Exception:
+        git_sha = None
+
+    scored = ScoredBatch(
+        config=BatchConfig(
+            run_id=run_id, ts=ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            model=settings.llm_model, prompt_version=prompt_version,
+            settings={"retrieval_k": settings.retrieval_k,
+                      "score_threshold": settings.score_threshold},
+            git_sha=git_sha,
+        ),
+        records=records,
+        aggregates=aggregate(records),
+    )
+
+    comparison = None
+    base_scored = None
+    if baseline is not None:
+        base_scored = load_scored_batch(baseline)
+        comparison = diff_runs(base_scored, scored)
+
+    write_results_jsonl(scored, out_dir / "results.jsonl")
+    write_meta_yaml(scored, out_dir / "meta.yaml")
+    write_report_md(scored, out_dir / "report.md",
+                    baseline=base_scored, comparison=comparison)
+
+    # Terse stdout
+    a = scored.aggregates
+    score_mae_str = "None" if a.score_mae is None else f"{a.score_mae:.1f}"
+    typer.echo(f"n_cases={a.n_cases}  errors={a.n_errors}  "
+               f"decision_accuracy={a.decision_accuracy:.2f}  "
+               f"score_mae={score_mae_str}  "
+               f"total_usd={a.total_usd}")
+    typer.echo(f"report: {out_dir / 'report.md'}")
+
+    if fail_under is not None and scored.aggregates.decision_accuracy < fail_under:
+        raise typer.Exit(code=1)

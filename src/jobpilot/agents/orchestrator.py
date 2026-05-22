@@ -22,14 +22,28 @@ def build_graph(
     *,
     settings: Settings,
     evaluator: EvaluatorAgent,
-    tailor: TailorAgent,
+    tailor: TailorAgent | None = None,
 ) -> CompiledStateGraph[AgentState]:
-    """Compile the two-node JobPilot graph."""
+    """Compile the JobPilot graph.
+
+    With `tailor=None`, the graph stops after evaluation (used by eval-batch by
+    default). With a tailor, the threshold-gated tailor edge is added.
+    """
 
     async def evaluate_node(state: AgentState) -> AgentState:
         return await evaluator.run(state)
 
+    graph: StateGraph[AgentState] = StateGraph(AgentState)
+    graph.add_node("evaluate", evaluate_node)
+    graph.add_edge(START, "evaluate")
+
+    if tailor is None:
+        graph.add_edge("evaluate", END)
+        return graph.compile()
+
     async def tailor_node(state: AgentState) -> AgentState:
+        # tailor is captured by closure; runtime guaranteed non-None here
+        assert tailor is not None
         return await tailor.run(state)
 
     def decide(state: AgentState) -> str:
@@ -43,10 +57,7 @@ def build_graph(
         log.info("orchestrator.skip", score=evaluation.score)
         return "skip"
 
-    graph: StateGraph[AgentState] = StateGraph(AgentState)
-    graph.add_node("evaluate", evaluate_node)
     graph.add_node("tailor", tailor_node)
-    graph.add_edge(START, "evaluate")
     graph.add_conditional_edges(
         "evaluate",
         decide,
