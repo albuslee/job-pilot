@@ -13,8 +13,7 @@ import yaml
 from jobpilot.evals.metrics import EvalRecord, ScoredBatch
 
 if TYPE_CHECKING:
-    # TODO(Task 8): remove the type-ignore once compare.py exists.
-    from jobpilot.evals.compare import ComparisonReport  # type: ignore[import-untyped]
+    from jobpilot.evals.compare import ComparisonReport
 
 
 def write_results_jsonl(scored: ScoredBatch, out: Path) -> None:
