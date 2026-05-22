@@ -13,6 +13,7 @@ def make_expected(
     key_evidence: list[str] | None = None,
     required_flags: list[str] | None = None,
     disallowed_flags: list[str] | None = None,
+    notes: str = "",
 ) -> ExpectedOutcome:
     return ExpectedOutcome(
         expected_decision=decision,
@@ -20,6 +21,7 @@ def make_expected(
         key_evidence_chunk_substrings=key_evidence or [],
         required_risk_flags=required_flags or [],
         disallowed_risk_flags=disallowed_flags or [],
+        notes=notes,
     )
 
 
