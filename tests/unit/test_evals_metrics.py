@@ -207,3 +207,14 @@ def test_aggregate_total_usd_sums_with_unknown_model_safe() -> None:
     agg = aggregate([r1, r2])
     # None entries are skipped; sum is the one known cost
     assert agg.total_usd == pytest.approx(0.001)
+    # mean_usd_per_known_case divides by KNOWN cases (1), not total (2)
+    assert agg.mean_usd_per_known_case == pytest.approx(0.001)
+
+
+def test_aggregate_total_usd_none_when_all_unknown() -> None:
+    r1 = _record("a", score=80).model_copy(
+        update={"telemetry": _record("a", score=80).telemetry.model_copy(update={"estimated_usd": None})}
+    )
+    agg = aggregate([r1])
+    assert agg.total_usd is None
+    assert agg.mean_usd_per_known_case is None

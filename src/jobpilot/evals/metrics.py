@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -107,7 +107,7 @@ class BatchAggregates(BaseModel):
     total_input_tokens: int
     total_output_tokens: int
     total_usd: float | None
-    mean_usd_per_case: float | None
+    mean_usd_per_known_case: float | None
 
 
 class ScoredBatch(BaseModel):
@@ -141,6 +141,8 @@ def score_case(
 
     if expected.key_evidence_chunk_substrings:
         cited_joined = " ".join(cited_chunk_texts.values()).lower()
+        # Lenient: a single matching anchor passes. Use multiple substrings to broaden
+        # what counts as 'right evidence', not to require all of them.
         citation_evidence_ok: bool | None = any(
             sub.lower() in cited_joined for sub in expected.key_evidence_chunk_substrings
         )
@@ -192,29 +194,32 @@ def aggregate(records: list[EvalRecord]) -> BatchAggregates:
     """Aggregate per-case records into batch-level metrics. See spec §7.2."""
     n_cases = len(records)
     errored = [r for r in records if r.error is not None]
-    ok = [r for r in records if r.error is None and r.metrics is not None]
+    # ok_metrics: pairs of (record, metrics) where metrics is guaranteed non-None.
+    # Typed explicitly so mypy can see the narrowed PerCaseMetrics type.
+    ok_raw = [r for r in records if r.error is None and r.metrics is not None]
+    ok: list[tuple[EvalRecord, PerCaseMetrics]] = [
+        (r, cast(PerCaseMetrics, r.metrics)) for r in ok_raw
+    ]
     n_errors = len(errored)
 
-    decision_correct_count = sum(1 for r in ok if r.metrics is not None and r.metrics.decision_correct)
+    decision_correct_count = sum(1 for _, m in ok if m.decision_correct)
     decision_total = len(ok)
     decision_accuracy = (decision_correct_count / decision_total) if decision_total else 0.0
 
-    score_records = [r for r in ok if r.metrics is not None and r.metrics.score_in_band is not None]
-    score_in_band_count = sum(
-        1 for r in score_records if r.metrics is not None and r.metrics.score_in_band
-    )
-    score_band_total = len(score_records)
+    score_pairs = [(r, m) for r, m in ok if m.score_in_band is not None]
+    score_in_band_count = sum(1 for _, m in score_pairs if m.score_in_band)
+    score_band_total = len(score_pairs)
     score_in_band_rate = (score_in_band_count / score_band_total) if score_band_total else None
     score_mae_values = [
-        r.metrics.score_abs_error
-        for r in score_records
-        if r.metrics is not None and r.metrics.score_abs_error is not None
+        m.score_abs_error
+        for _, m in score_pairs
+        if m.score_abs_error is not None
     ]
     score_mae = (sum(score_mae_values) / len(score_mae_values)) if score_mae_values else None
 
     def _flag_pass_rate(attr: str) -> tuple[float | None, int, int]:
-        rs = [r for r in ok if r.metrics is not None and getattr(r.metrics, attr) is not None]
-        passes = sum(1 for r in rs if r.metrics is not None and getattr(r.metrics, attr))
+        rs = [(r, m) for r, m in ok if getattr(m, attr) is not None]
+        passes = sum(1 for _, m in rs if getattr(m, attr))
         total = len(rs)
         rate = (passes / total) if total else None
         return rate, passes, total
@@ -230,12 +235,14 @@ def aggregate(records: list[EvalRecord]) -> BatchAggregates:
     total_input_tokens = sum(r.telemetry.input_tokens for r in records)
     total_output_tokens = sum(r.telemetry.output_tokens for r in records)
     known_costs = [r.telemetry.estimated_usd for r in records if r.telemetry.estimated_usd is not None]
+    total_usd: float | None
+    mean_usd_per_known_case: float | None
     if known_costs:
-        total_usd: float | None = sum(known_costs)
-        mean_usd: float | None = sum(known_costs) / len(known_costs)
+        total_usd = sum(known_costs)
+        mean_usd_per_known_case = total_usd / len(known_costs)
     else:
         total_usd = None
-        mean_usd = None
+        mean_usd_per_known_case = None
 
     return BatchAggregates(
         n_cases=n_cases,
@@ -262,5 +269,5 @@ def aggregate(records: list[EvalRecord]) -> BatchAggregates:
         total_input_tokens=total_input_tokens,
         total_output_tokens=total_output_tokens,
         total_usd=total_usd,
-        mean_usd_per_case=mean_usd,
+        mean_usd_per_known_case=mean_usd_per_known_case,
     )
