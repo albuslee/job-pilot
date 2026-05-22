@@ -26,7 +26,7 @@ PLAN.md
 docs/plans/
 
 # Eval harness — run artifacts are local except explicit baselines
-evals/runs/
+evals/runs/*
 !evals/runs/_baseline_*/
 
 # Env
