@@ -48,9 +48,9 @@ async def run_batch(
         calls: list[CallTelemetry] = []
         try:
             with llm.record() as recorded:
+                calls = recorded                          # bind ref BEFORE any work; list is mutated in place
                 state: AgentState = {"job": case.jd}
                 out = await graph.ainvoke(state)
-            calls = recorded                       # capture for any post-with exception path
             elapsed_ms = (time.monotonic() - t0) * 1000.0
             evaluation = out["evaluation"]
             if evaluation is None:

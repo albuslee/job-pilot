@@ -118,3 +118,44 @@ async def test_run_batch_records_error_when_graph_returns_no_evaluation(settings
     assert "no evaluation" in rec.error.message
     assert rec.actual is None
     assert rec.metrics is None
+
+
+@pytest.mark.asyncio
+async def test_run_batch_preserves_telemetry_when_graph_raises_mid_call(settings: Settings) -> None:
+    """Regression: when graph.ainvoke appends to the recording then raises,
+    the error record must still contain the captured CallTelemetry entries.
+
+    Before the fix, the assignment of `calls = recorded` happened AFTER the
+    `with` block, so calls made before the exception were silently dropped from
+    the error record's CaseTelemetry. This test exercises that path.
+    """
+    from jobpilot.llm.client import CallTelemetry
+
+    cases = [make_eval_case("a")]
+
+    bucket: list[CallTelemetry] = []
+
+    class _AppendsThenRaisesGraph:
+        async def ainvoke(self, state: AgentState) -> AgentState:
+            # Simulate the LLM client making a call before the graph blows up
+            # by appending directly into the shared recording bucket.
+            bucket.append(CallTelemetry(model="m", input_tokens=100, output_tokens=20, latency_ms=50.0))
+            raise RuntimeError("graph blew up mid-call")
+
+    llm = MagicMock()
+    llm.record.return_value.__enter__.return_value = bucket
+    llm.record.return_value.__exit__.return_value = None
+
+    records = await run_batch(
+        cases=cases, graph=_AppendsThenRaisesGraph(), llm=llm,
+        prompt_version="v1", model="m",
+    )
+
+    assert len(records) == 1
+    rec = records[0]
+    assert rec.error is not None and rec.error.type == "RuntimeError"
+    # CRITICAL: telemetry from the partially-completed call must survive
+    assert rec.telemetry.input_tokens == 100
+    assert rec.telemetry.output_tokens == 20
+    assert len(rec.telemetry.calls) == 1
+    assert rec.telemetry.calls[0].model == "m"
