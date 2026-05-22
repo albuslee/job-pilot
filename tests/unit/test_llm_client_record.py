@@ -126,3 +126,23 @@ def test_record_rejects_nested_entry(settings: Settings) -> None:
         with pytest.raises(RuntimeError, match="nested"):
             with client.record():
                 pass
+
+
+def test_record_resets_state_after_exception(settings: Settings) -> None:
+    sdk = MagicMock()
+    sdk.chat.completions.create.return_value = _fake_response(_payload(), 100, 20)
+    client = LLMClient(settings=settings, sdk=sdk)
+
+    # First block raises mid-way; the finally must reset state.
+    with pytest.raises(ValueError, match="boom"):  # noqa: SIM117
+        with client.record():
+            raise ValueError("boom")
+
+    # Second block must work, proving state was cleaned up.
+    with client.record() as calls:
+        client.complete_structured(
+            system="s", user="u", cached_context=None,
+            schema=EvaluationResult,
+            tool_name="submit_evaluation", tool_description="d",
+        )
+    assert len(calls) == 1
