@@ -136,3 +136,18 @@ def test_report_md_no_baseline_section(tmp_path: Path) -> None:
     body = out.read_text(encoding="utf-8")
     assert "Delta vs baseline" not in body
     assert "Regressions" not in body
+
+
+def test_report_md_with_baseline_includes_delta_and_regressions(tmp_path: Path) -> None:
+    from jobpilot.evals.compare import diff_runs
+
+    baseline = _scored([_record("x", decision="apply", score=80)])    # pass
+    candidate = _scored([_record("x", decision="maybe", score=60)])   # fail
+    cmp = diff_runs(baseline, candidate)
+
+    out = tmp_path / "report.md"
+    write_report_md(candidate, out, baseline=baseline, comparison=cmp)
+    body = out.read_text(encoding="utf-8")
+    assert "Delta vs baseline" in body
+    assert "Regressions (1)" in body
+    assert "decision apply→maybe" in body
