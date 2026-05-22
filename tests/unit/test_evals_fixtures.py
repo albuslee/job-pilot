@@ -42,7 +42,7 @@ def test_load_eval_set_defaults_optional_fields(tmp_path: Path) -> None:
     assert e.notes == ""
 
 
-def test_load_eval_set_skips_jds_without_labels(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+def test_load_eval_set_skips_jds_without_labels(tmp_path: Path) -> None:
     _write(tmp_path / "jobs/a.txt", "JD A")
     _write(tmp_path / "jobs/b.txt", "JD B")
     _write(tmp_path / "labels/a.yaml", "expected_decision: apply\n")
