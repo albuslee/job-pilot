@@ -55,3 +55,24 @@ def test_load_prices_rejects_negative(tmp_path: Path) -> None:
 def test_load_prices_missing_file(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         load_prices(tmp_path / "nope.yaml")
+
+
+def test_load_prices_rejects_nan(tmp_path: Path) -> None:
+    p = tmp_path / "nan.yaml"
+    p.write_text('"m":\n  input: .nan\n  output: 0.01\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="finite"):
+        load_prices(p)
+
+
+def test_load_prices_rejects_inf(tmp_path: Path) -> None:
+    p = tmp_path / "inf.yaml"
+    p.write_text('"m":\n  input: .inf\n  output: 0.01\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="finite"):
+        load_prices(p)
+
+
+def test_load_prices_rejects_non_mapping_yaml(tmp_path: Path) -> None:
+    p = tmp_path / "list.yaml"
+    p.write_text("- not\n- a\n- mapping\n", encoding="utf-8")
+    with pytest.raises(TypeError, match="YAML mapping"):
+        load_prices(p)
