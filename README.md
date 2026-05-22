@@ -60,8 +60,8 @@ make generate-pool                                  # → data/bullet_pool.yaml
 $EDITOR data/bullet_pool.yaml      # rename IDs, add alternative framings
 
 make ingest                         # embed profile into ChromaDB
-make eval JD=data/sample_jobs/canva_fullstack.txt
-make run  JD=data/sample_jobs/canva_fullstack.txt   # evaluate + tailor → output/
+make eval JD=evals/jobs/canva_fullstack.txt
+make run  JD=evals/jobs/canva_fullstack.txt   # evaluate + tailor → output/
 ```
 
 > `data/profile/`, `data/cv_template.docx`, and `data/bullet_pool.yaml` are
