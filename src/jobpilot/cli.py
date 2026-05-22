@@ -166,7 +166,6 @@ def eval_batch_cmd(
     """
     _ = concurrency  # reserved for future use
 
-    import asyncio
     import subprocess
     from datetime import UTC, datetime
 
@@ -248,10 +247,11 @@ def eval_batch_cmd(
     # Terse stdout
     a = scored.aggregates
     score_mae_str = "None" if a.score_mae is None else f"{a.score_mae:.1f}"
+    total_usd_str = f"${a.total_usd:.4f}" if a.total_usd is not None else "n/a"
     typer.echo(f"n_cases={a.n_cases}  errors={a.n_errors}  "
                f"decision_accuracy={a.decision_accuracy:.2f}  "
                f"score_mae={score_mae_str}  "
-               f"total_usd={a.total_usd}")
+               f"total_usd={total_usd_str}")
     typer.echo(f"report: {out_dir / 'report.md'}")
 
     if fail_under is not None and scored.aggregates.decision_accuracy < fail_under:
