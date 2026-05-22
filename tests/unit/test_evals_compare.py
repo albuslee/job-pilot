@@ -9,6 +9,7 @@ from jobpilot.evals.fixtures import ExpectedOutcome
 from jobpilot.evals.metrics import (
     ActualOutcome,
     BatchConfig,
+    CaseError,
     CaseTelemetry,
     EvalRecord,
     PerCaseMetrics,
@@ -100,3 +101,20 @@ def test_load_scored_batch_reads_jsonl_and_meta(tmp_path: Path) -> None:
     assert scored.config.run_id == "rid"
     assert len(scored.records) == 1
     assert scored.aggregates.n_cases == 1
+
+
+def test_diff_runs_skips_cases_where_one_side_errored() -> None:
+    expected = ExpectedOutcome(expected_decision="apply", expected_score_band=(70, 90))  # type: ignore[arg-type]
+    errored = EvalRecord(
+        stem="x", ts="t", prompt_version="v1", model="m",
+        expected=expected, actual=None, retrieved_chunk_ids=[], metrics=None,
+        telemetry=CaseTelemetry(latency_ms=1.0, calls=[], input_tokens=0,
+                                output_tokens=0, estimated_usd=None),
+        error=CaseError(type="X", message="boom"),
+    )
+    baseline = _scored([errored])
+    candidate = _scored([_rec("x", score=80)])  # passes
+    cmp = diff_runs(baseline, candidate)
+    # error→pass transition is dropped from improvements
+    assert cmp.improvements == []
+    assert cmp.regressions == []
