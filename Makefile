@@ -23,11 +23,11 @@ ingest:
 	uv run jobpilot ingest --profile data/profile/
 
 eval:
-	@if [ -z "$(JD)" ]; then echo "Usage: make eval JD=data/sample_jobs/canva_fullstack.txt"; exit 1; fi
+	@if [ -z "$(JD)" ]; then echo "Usage: make eval JD=evals/jobs/canva_fullstack.txt"; exit 1; fi
 	uv run jobpilot eval $(JD)
 
 run:
-	@if [ -z "$(JD)" ]; then echo "Usage: make run JD=data/sample_jobs/canva_fullstack.txt"; exit 1; fi
+	@if [ -z "$(JD)" ]; then echo "Usage: make run JD=evals/jobs/canva_fullstack.txt"; exit 1; fi
 	uv run jobpilot run $(JD)
 
 # Bootstrap data/bullet_pool.yaml from your CV template (one-time helper).
