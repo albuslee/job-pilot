@@ -11,6 +11,10 @@ at the gateway level based on its own configuration.
 from __future__ import annotations
 
 import json
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import Any, TypeVar
 
 from openai import APIConnectionError, APIStatusError, OpenAI, RateLimitError
@@ -36,6 +40,16 @@ class StructuredOutputError(RuntimeError):
 _RETRY_EXC = (APIConnectionError, RateLimitError, APIStatusError)
 
 
+@dataclass(frozen=True)
+class CallTelemetry:
+    """Per-LLM-call usage and latency, captured by LLMClient.record()."""
+
+    model: str
+    input_tokens: int
+    output_tokens: int
+    latency_ms: float
+
+
 class LLMClient:
     def __init__(self, *, settings: Settings, sdk: Any | None = None) -> None:
         self._settings = settings
@@ -43,6 +57,22 @@ class LLMClient:
             base_url=settings.litellm_base_url,
             api_key=settings.litellm_api_key,
         )
+        self._active_recording: list[CallTelemetry] | None = None
+
+    @contextmanager
+    def record(self) -> Iterator[list[CallTelemetry]]:
+        """Capture per-call telemetry for the duration of the block.
+
+        Nested entry is not supported in item 1 and raises RuntimeError.
+        """
+        if self._active_recording is not None:
+            raise RuntimeError("LLMClient.record() blocks cannot be nested")
+        bucket: list[CallTelemetry] = []
+        self._active_recording = bucket
+        try:
+            yield bucket
+        finally:
+            self._active_recording = None
 
     @retry(
         retry=retry_if_exception_type(_RETRY_EXC),
@@ -78,6 +108,7 @@ class LLMClient:
         }
 
         log.debug("llm.request", model=self._settings.llm_model, tool=tool_name)
+        t0 = time.monotonic()
         response = self._sdk.chat.completions.create(
             model=self._settings.llm_model,
             max_tokens=max_tokens,
@@ -85,6 +116,18 @@ class LLMClient:
             tools=[tool],
             tool_choice={"type": "function", "function": {"name": tool_name}},
         )
+        latency_ms = (time.monotonic() - t0) * 1000.0
+
+        if self._active_recording is not None:
+            usage = getattr(response, "usage", None)
+            self._active_recording.append(
+                CallTelemetry(
+                    model=self._settings.llm_model,
+                    input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+                    output_tokens=getattr(usage, "completion_tokens", 0) or 0,
+                    latency_ms=latency_ms,
+                )
+            )
 
         tool_calls = getattr(response.choices[0].message, "tool_calls", None)
         if tool_calls:
