@@ -16,7 +16,7 @@ from jobpilot.evals.metrics import (
     score_case,
 )
 from jobpilot.evals.pricing import PriceTable, cost
-from jobpilot.llm.client import LLMClient
+from jobpilot.llm.client import CallTelemetry, LLMClient
 from jobpilot.logging_setup import get_logger
 from jobpilot.models.state import AgentState
 
@@ -45,10 +45,12 @@ async def run_batch(
     for case in cases:
         ts = _now_iso()
         t0 = time.monotonic()
+        calls: list[CallTelemetry] = []
         try:
-            with llm.record() as calls:
+            with llm.record() as recorded:
                 state: AgentState = {"job": case.jd}
                 out = await graph.ainvoke(state)
+            calls = recorded                       # capture for any post-with exception path
             elapsed_ms = (time.monotonic() - t0) * 1000.0
             evaluation = out["evaluation"]
             if evaluation is None:
@@ -86,12 +88,19 @@ async def run_batch(
                      score=actual.score, latency_ms=elapsed_ms)
         except Exception as exc:
             elapsed_ms = (time.monotonic() - t0) * 1000.0
+            # Preserve whatever telemetry was captured before the exception fired.
+            call_dtos = [CallTelemetryDTO(model=c.model, input_tokens=c.input_tokens,
+                                          output_tokens=c.output_tokens, latency_ms=c.latency_ms)
+                         for c in calls]
+            tot_in = sum(c.input_tokens for c in call_dtos)
+            tot_out = sum(c.output_tokens for c in call_dtos)
+            usd = cost(model, tot_in, tot_out, prices=prices) if prices is not None else None
             records.append(EvalRecord(
                 stem=case.stem, ts=ts, prompt_version=prompt_version, model=model,
                 expected=case.expected, actual=None, retrieved_chunk_ids=[], metrics=None,
-                telemetry=CaseTelemetry(latency_ms=elapsed_ms, calls=[],
-                                        input_tokens=0, output_tokens=0, estimated_usd=None),
+                telemetry=CaseTelemetry(latency_ms=elapsed_ms, calls=call_dtos,
+                                        input_tokens=tot_in, output_tokens=tot_out, estimated_usd=usd),
                 error=CaseError(type=type(exc).__name__, message=str(exc)),
             ))
-            log.warning("eval.case_failed", stem=case.stem, error=str(exc))
+            log.warning("eval.case_failed", stem=case.stem, error=str(exc), exc_info=True)
     return records
