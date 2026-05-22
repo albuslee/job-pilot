@@ -87,3 +87,34 @@ async def test_run_batch_captures_error_and_continues(settings: Settings) -> Non
     assert "graph blew up" in records[1].error.message
     assert records[1].actual is None
     assert records[1].metrics is None
+
+
+@pytest.mark.asyncio
+async def test_run_batch_records_error_when_graph_returns_no_evaluation(settings: Settings) -> None:
+    """When the graph returns AgentState with evaluation=None, the guard fires and produces a CaseError."""
+    chunk = ProfileChunk(id="c1", source="cv.docx", heading_path=["Work"], text="x")
+    state_with_no_eval = AgentState(
+        job=JobDescription(source="a.txt", body="jd"),
+        retrieved=[chunk],
+        evaluation=None,                       # the trigger
+        tailored=None,
+        output_paths={},
+    )
+    cases = [make_eval_case("a")]
+    graph = _StubGraph({"a": state_with_no_eval})
+    llm = MagicMock()
+    llm.record.return_value.__enter__.return_value = []
+    llm.record.return_value.__exit__.return_value = None
+
+    records = await run_batch(
+        cases=cases, graph=graph, llm=llm,
+        prompt_version="v1", model="m",
+    )
+
+    assert len(records) == 1
+    rec = records[0]
+    assert rec.error is not None
+    assert rec.error.type == "ValueError"
+    assert "no evaluation" in rec.error.message
+    assert rec.actual is None
+    assert rec.metrics is None
