@@ -63,7 +63,7 @@ class LLMClient:
     def record(self) -> Iterator[list[CallTelemetry]]:
         """Capture per-call telemetry for the duration of the block.
 
-        Nested entry is not supported in item 1 and raises RuntimeError.
+        Nested entry is not supported and raises RuntimeError.
         """
         if self._active_recording is not None:
             raise RuntimeError("LLMClient.record() blocks cannot be nested")
