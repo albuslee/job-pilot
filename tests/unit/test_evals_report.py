@@ -92,6 +92,7 @@ def test_report_md_contains_summary(tmp_path: Path) -> None:
     assert "decision_accuracy" in body
     assert "score_mae" in body
     assert "1/2" in body  # one of two correct
+    assert "mean cost / known case" in body
 
 
 def test_report_md_lists_failures_sorted_by_stem(tmp_path: Path) -> None:

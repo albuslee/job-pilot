@@ -143,6 +143,8 @@ def write_report_md(
          f"{agg.p50_latency_ms / 1000.0:.1f}s / {agg.p95_latency_ms / 1000.0:.1f}s"),
         ("total tokens (in / out)", f"{agg.total_input_tokens:,} / {agg.total_output_tokens:,}"),
         ("total cost", _fmt_usd(agg.total_usd)),
+        ("mean cost / known case",
+         _fmt_usd(agg.mean_usd_per_known_case) if agg.mean_usd_per_known_case is not None else "n/a"),
         ("errors", str(agg.n_errors)),
     ]
     lines.append("| metric | value |")

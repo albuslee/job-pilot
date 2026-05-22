@@ -207,7 +207,7 @@ class EvalCase(BaseModel):
 - `score_mae`, `score_in_band_rate` — computed only over cases that had a `expected_score_band` (denominator reported)
 - `citation_evidence_pass_rate`, `required_risk_flags_pass_rate`, `disallowed_risk_flags_pass_rate` — each over cases that had the corresponding non-empty label list (denominator reported)
 - `p50_latency_ms`, `p95_latency_ms`
-- `total_input_tokens`, `total_output_tokens`, `total_usd`, `mean_usd_per_case`
+- `total_input_tokens`, `total_output_tokens`, `total_usd`, `mean_usd_per_known_case` (USD averaged over cases with a known model price)
 - `n_cases`, `n_errors` (cases that raised during `graph.ainvoke` are bucketed separately and do **not** count as a "wrong decision")
 
 ## 8. Run outputs
