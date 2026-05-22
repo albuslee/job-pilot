@@ -1,0 +1,4 @@
+# Starter label. Score band, evidence, and risk-flag substrings are filled in
+# after the first eval-batch run (see evals/README.md bootstrap workflow).
+expected_decision: maybe
+notes: "Starter label — Python + AWS match but OpenAI-scale distributed systems is a stretch; owner verifies after first run."

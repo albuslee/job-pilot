@@ -1,0 +1,4 @@
+# Starter label. Score band, evidence, and risk-flag substrings are filled in
+# after the first eval-batch run (see evals/README.md bootstrap workflow).
+expected_decision: apply
+notes: "Starter label — engineering-focused role (not ML research); LangGraph + multi-agent + eval harness experience is a strong match; owner verifies after first run."
