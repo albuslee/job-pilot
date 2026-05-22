@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import yaml
@@ -17,6 +18,8 @@ class ModelPrice(BaseModel):
     @field_validator("input", "output")
     @classmethod
     def _check_nonneg(cls, v: float) -> float:
+        if not math.isfinite(v):
+            raise ValueError("must be a finite number >= 0")
         if v < 0:
             raise ValueError("must be >= 0")
         return v
@@ -34,6 +37,8 @@ class PriceTable(BaseModel):
 
 def load_prices(path: Path) -> PriceTable:
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    if not isinstance(raw, dict):
+        raise TypeError(f"expected a YAML mapping in {path}, got {type(raw).__name__}")
     parsed: dict[str, ModelPrice] = {}
     for model, entry in raw.items():
         parsed[model] = ModelPrice.model_validate(entry)
