@@ -34,7 +34,7 @@ class RegressionRow(BaseModel):
 
 
 class ImprovementRow(RegressionRow):
-    pass
+    """A case that failed in baseline and passes in candidate."""
 
 
 class ComparisonReport(BaseModel):
@@ -57,10 +57,6 @@ def _passes(rec: EvalRecord) -> bool:
             m.cited_chunks_retrieved,
         )
     )
-
-
-def _fmt_pct(rate: float | None) -> str:
-    return f"{rate * 100:.1f}%" if rate is not None else "n/a"
 
 
 def _fmt_pp_delta(a: float | None, b: float | None) -> str:
@@ -89,6 +85,9 @@ def diff_runs(baseline: ScoredBatch, candidate: ScoredBatch) -> ComparisonReport
     for stem in sorted(common):
         b = base_by_stem[stem]
         c = cand_by_stem[stem]
+        # Skip cases where one side errored: error transitions are surfaced via
+        # the Errors section of each run's report, not as regressions/improvements.
+        # Tracking pass<>error transitions explicitly is a future enhancement.
         if b.actual is None or c.actual is None:
             continue
         b_pass = _passes(b)
