@@ -95,6 +95,7 @@ All personal info lives in `.env` (gitignored). Key variables:
 | `make typecheck` | mypy |
 | `make ingest` | Ingest `data/profile/` into ChromaDB |
 | `make eval JD=<path>` | Run evaluator against a job description |
+| `make eval-batch` | Run all JDs in `evals/jobs/` against labels, write report. Pass `ARGS="--model X --baseline Y"` for overrides. |
 | `make run JD=<path>` | Evaluate + tailor (writes `output/<OWNER>_CV_<company>.docx` when score ≥ threshold) |
 | `make generate-pool` | **Bootstrap-only.** Seed `data/bullet_pool.yaml` from the bullets in `data/cv_template.docx` under `CURRENT_ROLE_ANCHOR`. Refuses to overwrite an existing pool; pass `FORCE=1` to override. |
 
@@ -145,6 +146,13 @@ only what's in the retrieved chunks" constraints), since those are lower-risk to
   - Role bullet pool — schema-enforced, post-validated, hallucination-proof
   - LangGraph orchestrator: `evaluate → (score ≥ threshold) → tailor → END`
   - `jobpilot run <jd.txt>` produces `output/<OWNER>_CV_<company>.docx`
-- **Backlog (v2)**
+- **v3 item 1 (complete)**
+  - Eval harness: `jobpilot eval-batch` with JSONL + Markdown reports
+  - Baseline diffing, cost tracking, per-JD regression detection
+  - 7 labelled JDs, 5-model benchmark (see `evals/README.md`)
+  - LinkedIn JD scraper (`scripts/scrape_linkedin_jd.py`)
+  - 114 tests, 92% coverage
+- **Backlog (v2/v3)**
+  - Tracing + observability, LangGraph HITL checkpointing, hybrid retrieval
   - Discord bot wrapper, Monitor / Outreach / Prep / Tracker agents
-  - FastAPI + LangSmith tracing + full eval harness
+  - FastAPI + LangSmith tracing
