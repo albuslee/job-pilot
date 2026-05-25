@@ -1,4 +1,4 @@
-.PHONY: setup test test-all lint lint-fix typecheck ingest eval run generate-pool
+.PHONY: setup test test-all lint lint-fix typecheck ingest eval eval-batch run generate-pool
 
 setup:
 	uv sync
@@ -25,6 +25,9 @@ ingest:
 eval:
 	@if [ -z "$(JD)" ]; then echo "Usage: make eval JD=evals/jobs/canva_fullstack.txt"; exit 1; fi
 	uv run jobpilot eval $(JD)
+
+eval-batch:
+	uv run jobpilot eval-batch $(ARGS)
 
 run:
 	@if [ -z "$(JD)" ]; then echo "Usage: make run JD=evals/jobs/canva_fullstack.txt"; exit 1; fi
