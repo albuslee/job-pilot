@@ -1,0 +1,55 @@
+Title: Senior Software Engineer (Payments & Billing)
+Company: Relevance AI
+Source: https://www.linkedin.com/jobs/view/4386745155/
+
+About the job:
+Location 📍:
+Sydney, AU, Hybrid (3 days in office required)
+About Us 🚀
+At Relevance AI, we’re building the home of the AI workforce.
+Our mission is simple: empower every team to delegate meaningful work to AI agents that think, act, and collaborate like experts.
+With Relevance AI, anyone can create and manage intelligent agents that handle workflows, decisions, and collaboration - all within one unified platform. Our technology already powers industry leaders such as Canva, Databricks, Confluent, Autodesk, Lightspeed, Rakuten, Aveva, Qualified, and Activision Blizzard, helping them scale excellence across operations, marketing, and sales.
+We’re backed by Bessemer Venture Partners, Insight Partners, Peak XV, and King River Capital, and raised our Series B in April 2025 to accelerate growth and push the boundaries of agentic automation.
+Headquartered in San Francisco and Sydney, we operate on a hybrid model and thrive on curiosity, collaboration, and execution - we move fast, think big, and win together.
+In 2025, we were proud to be named LinkedIn’s #1 Startup in Australia.
+If you want to define how the world works with AI, join us.
+The Role 🥳
+Billing for AI products is a genuinely hard, largely unsolved technical problem. High-volume event metering, token-based usage tracking, distributed workflows, multi-dimensional pricing - these aren't standard billing challenges, and there's no off-the-shelf playbook.
+We're looking for a back-end leaning software engineer to step up to the challenge of taking ownership of our core billing and payments system. In this role, you’ll own the design, implementation, reliability and evolution of our systems, ensuring the company can accurately meter usage, invoice customers, and collect revenue at scale. This is a greenfield opportunity in a high-ownership, fast-moving AI company where you will own real systems with real stakes, and genuine room to redesign the foundations as we scale.
+You'll work across backend systems, integrations with Stripe and Orb, and internal data pipelines to ensure billing data is accurate, auditable, and resilient. You will have an opportunity to design and architect new billing infrastructure that scales with the company's growth while supporting complex AI product usage models.
+Your impact💥
+Design and maintain reliable billing infrastructure integrating with Stripe and Orb.
+Ship meaningful improvements to our billing platform and help strengthen reliability, observability, and data integrity across the system.
+Own key payments and billing workflows end to end, including areas such as usage-based pricing, metering, invoicing, and error prevention.
+Design systems and processes that make our billing platform more robust, enterprise-ready, and easier to operate at scale.
+Partner cross-functionally with engineering, finance, and other stakeholders to ensure billing outcomes are accurate, trusted, and well understood.
+Raise the bar for backend engineering quality by improving monitoring, troubleshooting, and operational excellence in a business-critical domain.
+What We’re Looking For
+🧠
+5+ years of software engineering experience, ideally in fast-moving tech and/or startup environments.
+Have strong backend engineering experience and are comfortable owning application code, services, and the infrastructure considerations around them.
+Meaningful domain expertise in payments, billing, or closely related financial systems, with a strong grasp of reliability, observability, and data integrity.
+Familiarity with platforms such as Stripe, Orb or similar.
+Thrive in high-performance, fast-paced environments with a startup mindset.
+Excel at problem-solving, taking ownership, and delivering exceptional results in complex, cross-functional domains.
+Our Tech Stack (so far) 💻
+We leverage a modern, scalable, and developer-friendly technology stack to build robust web applications:
+Backend: Express.js, Node.js, Typescript, Python
+Billing Systems: Stripe (payments), Orb (usage-based billing)
+Database: PostgreSQL
+Cloud Infrastructure: Vercel, AWS (Lambda, Batch, CloudWatch), Terraform
+Why Join Us? 🌟
+Work at the forefront of AI with a nimble team that is constantly pushing boundaries. We encourage and celebrate ideas that drive our mission forward.
+We're guided by our five values: truth-seeking, being empathetic, putting the customer first, iterating extremely fast, and building memories.
+We’ve set high standards in our high-trust, low-ego environment. We hire exceptional people to do the best work of their lives. In return, we reward our people with competitive salaries, equity stake, unparalleled professional growth, and career-defining opportunities.
+Relevance AI is well-funded by leading investors, including Bessemer Venture Partners, Insights Partners, Peak XV, and King River Capital.
+As an early team member, you’ll play a key role in shaping our future—including our culture, ways of working, and even the benefits we offer. We’re laying the foundations now, and your ideas can help define what comes next.
+Benefits ✨
+📈 ESOP – Employee Stock Ownership Plan so you can grow with the company
+🤖 AI Productivity Benefit – Get up to $1200 USD/year to spend on AI tools, courses, and learning resources that help you work smarter and grow your skills
+👶 Parental Leave – We offer 12 weeks of paid parental leave for all eligible new parents, and an additional 6 weeks for the birthing parent
+🎉 Milestone Merch – Celebrate your work anniversaries with customised Relevance AI swag
+🍿 Food, Drinks & Community – Stay energised with free breakfasts, healthy snacks, and a fully stocked fridge of drinks. Enjoy team lunches provided every Tuesday, Thursday and Friday, plus Uber Eats dinners and regular catered office meals throughout the week. As the home of the AI workforce, we also host vibrant community events featuring thought leaders, industry partners, and the wider tech community.
+🪩 Quarterly Team Events – Build stronger connections through fun, meaningful team bonding experiences every quarter
+🏓 Social Clubs – Share your hobbies and interests by joining or starting a club with your teammates. From hiking and chess to board game nights and social committee activities—there’s something for everyone!
+🧠 Sonder EAP – Access 24/7 mental health and wellbeing support through Sonder, our Employee Assistance Program

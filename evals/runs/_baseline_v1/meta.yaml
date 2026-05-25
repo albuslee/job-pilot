@@ -1,0 +1,9 @@
+run_id: 2026-05-25T07-38-51
+ts: '2026-05-25T07:38:51Z'
+model: sonnet-4.6
+prompt_version: v1
+n_cases: 7
+settings:
+  retrieval_k: 8
+  score_threshold: 70
+git_sha: d734c9efb9d00b04c4be2dd3c857a968e8681118

@@ -1,0 +1,59 @@
+Title: Senior AI Engineer
+Company: Relevance AI
+Source: https://www.linkedin.com/jobs/view/4358426484/
+
+About the job:
+Location 📍:
+Sydney, Australia (Hybrid - 3 Days In Office)
+About Us 🚀
+At Relevance AI, we’re building the home of the AI workforce.
+Our mission is simple: empower every team to delegate meaningful work to AI agents that think, act, and collaborate like experts.
+With Relevance AI, anyone can create and manage intelligent agents that handle workflows, decisions, and collaboration - all within one unified platform. Our technology already powers industry leaders such as Canva, Databricks, Confluent, Autodesk, Lightspeed, Rakuten, Aveva, Qualified, and Activision Blizzard, helping them scale excellence across operations, marketing, and sales.
+We’re backed by Bessemer Venture Partners, Insight Partners, Peak XV, and King River Capital, and raised our Series B in April 2025 to accelerate growth and push the boundaries of agentic automation.
+Headquartered in San Francisco and Sydney, we operate on a hybrid model and thrive on curiosity, collaboration, and execution - we move fast, think big, and win together.
+In 2025, we were proud to be named LinkedIn’s #1 Startup in Australia.
+If you want to define how the world works with AI, join us.
+The Role 🥳
+We are seeking Senior Engineers to join our AI team and build the next generation of AI-powered products.
+This is a
+high-impact applied AI role
+for engineers who want their work to matter. You’ll build and ship real AI features that solve customer problems across multiple industries - turning cutting-edge agentic AI into systems customers rely on in production.
+This is not a ML or MLOps role. You’ll work across the full software stack to design, build, and ship AI-powered workflows, tools, and experiences. Your work will span prompt and context engineering, agent orchestration, backend services, APIs, infrastructure, and user-facing interfaces - often within the same project.
+You’ll be part of a small high-performing team of AI specialists reporting directly to our co-founder and be deeply embedded across our various Product & Engineering teams. If you’re excited by LLMs, multi-agent systems, and solving hard, real-world AI problems, this role is built for you.
+Your impact💥
+Develop Agents and Multi-agent systems: Design and implement AI agent and extend existing agents with new capabilities. This includes managing the agent’s context (using techniques like sub-agents, retrieval based context management, sliding context windows, etc.).
+Develop Tools for agents: Develop complex tools for agents like computer use, browser use, etc.
+Multi-agent orchestration and tool calling: Research and develop systems on how agents should collaborate, and how agents should call tools.
+Fullstack development: Build and maintain production-grade APIs and AI-powered features, from backend services to user-facing experiences.
+Evaluate and improve: Evaluate AI’s performance using evaluations and tests to then iterate on prompts, agent tools and agents orchestration to improve output quality and reliability.
+Our Tech Stack (so far) 💻
+We leverage a modern, scalable, and developer-friendly technology stack to build robust web applications:
+Frontend: React, Vue.js, Typescript
+Backend: Express.js, Node.js, Typescript
+Database: PostgreSQL, MongoDB
+Cloud Infrastructure: AWS, Vercel, Terraform, Kubernetes
+AI Coding Tools: Claude Code, Cursor, Codex and more
+What We’re Looking For
+🧠
+4+ years in full-stack software development, ideally developing practical and production-ready AI applications or features that utilise Gen AI/ LLMs / RAG.
+Strong programming skills in Python and Typescript, including experience using AI-assisted coding tools.
+Deep understanding of foundational models, prompt engineering, and fine-tuning techniques.
+Understanding of software design, service architecture, and scalable systems.
+Passion for building AI-enhanced user experiences, not just theoretical ML solutions.
+Prior start-up or tech company experience is a plus - especially where you’ve worn multiple hats or shaped early products.
+Bonus: Side projects or open-source contributions involving building AI agents, RAG pipelines, or open-source LLM tooling.
+Why Join Us? 🌟
+Work at the forefront of AI with a nimble team that is constantly pushing boundaries. We encourage and celebrate ideas that drive our mission forward.
+We're guided by our five values: truth-seeking, being empathetic, putting the customer first, iterate extremely fast, and building memories.
+We’ve set high standards in our high-trust, low-ego environment. We hire exceptional people to do the best work of their lives. In return, we reward our people with competitive salaries, equity stake, unparalleled professional growth, and career-defining opportunities.
+Relevance AI is well-funded by leading investors, including Bessemer Venture Partners, Insights Partners, Peak XV, and King River Capital.
+As an early team member, you’ll play a key role in shaping our future—including our culture, ways of working, and even the benefits we offer. We’re laying the foundations now, and your ideas can help define what comes next.
+Benefits (Australia) ✨
+📈 ESOP – Employee Stock Ownership Plan so you can grow with the company
+🤖 AI Productivity Benefit – Get up to $1200 USD/year to spend on AI tools, courses, and learning resources that help you work smarter and grow your skills
+👶 Parental Leave – We offer 12 weeks of paid parental leave for all eligible new parents, and an additional 6 weeks for the birthing parent
+🎉 Milestone Merch – Celebrate your work anniversaries with customised Relevance AI swag
+🍿 Food, Drinks & Community – Stay energised with free breakfasts, healthy snacks, and a fully stocked fridge of drinks. Enjoy team lunches provided every Tuesday, Thursday and Friday, plus Uber Eats dinners and regular catered office meals throughout the week. As the home of the AI workforce, we also host vibrant community events featuring thought leaders, industry partners, and the wider tech community.
+🪩 Quarterly Team Events – Build stronger connections through fun, meaningful team bonding experiences every quarter
+🏓 Social Clubs – Share your hobbies and interests by joining or starting a club with your teammates. From hiking and chess to board game nights and social committee activities—there’s something for everyone!
+🧠 Sonder EAP – Access 24/7 mental health and wellbeing support through Sonder, our Employee Assistance Program
