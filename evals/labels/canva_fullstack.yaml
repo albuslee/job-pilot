@@ -2,3 +2,4 @@
 # after the first eval-batch run (see evals/README.md bootstrap workflow).
 expected_decision: apply
 notes: "Starter label — TypeScript + Python + AWS + RAG match; owner verifies after first run."
+expected_score_band: [72, 92] # ±10 around 82

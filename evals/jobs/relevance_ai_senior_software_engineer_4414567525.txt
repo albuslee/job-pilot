@@ -1,0 +1,66 @@
+Title: Senior Software Engineer
+Company: Relevance AI
+Source: https://www.linkedin.com/jobs/view/4414567525/
+
+About the job:
+Location 📍:
+Sydney, AU, Hybrid (3 days in office required)
+About Us 🚀
+At Relevance AI, we’re building the home of the AI workforce.
+Our mission is simple: empower every team to delegate meaningful work to AI agents that think, act, and collaborate like experts.
+With Relevance AI, anyone can create and manage intelligent agents that handle workflows, decisions, and collaboration - all within one unified platform. Our technology already powers industry leaders such as Canva, Databricks, Confluent, Autodesk, Lightspeed, Rakuten, Aveva, Qualified, and Activision Blizzard, helping them scale excellence across operations, marketing, and sales.
+We’re backed by Bessemer Venture Partners, Insight Partners, Peak XV, and King River Capital, and raised our Series B in April 2025 to accelerate growth and push the boundaries of agentic automation.
+Headquartered in San Francisco and Sydney, we operate on a hybrid model and thrive on curiosity, collaboration, and execution - we move fast, think big, and win together.
+In 2025, we were proud to be named LinkedIn’s #1 Startup in Australia.
+If you want to define how the world works with AI, join us.
+The Role 🥳
+We’re hiring for several
+Senior Software Engineers (Full-Stack / Back-End)
+to work across our core engineering teams in Sydney.
+Each team at Relevance AI is tackling a different frontier of the AI workforce — from the core agent and tool builder experience, to the conversational layer that powers real-time agentic chat, to the enterprise-grade platform capabilities that serve our largest and most demanding customers. Regardless of where you land, you'll be building systems that make AI usable, reliable, and production-ready.
+Our roles would be ideal for an engineer who enjoys solving deep technical problems, designing robust scalable systems, and owning complex projects end-to-end in close collaboration with product and customer-facing teams.
+In return, you'll receive real autonomy and trust: shipping to customers within hours, leading complex projects end-to-end, and shaping how we build as we scale. No unnecessary layers of approval — just high ownership, high impact work.
+Our supportive, fast-paced culture fosters collaboration, curiosity, and creativity, making it an environment where innovation thrives and where your ideas and expertise will be highly valued.
+Your Impact 💥
+Design, build, and operate scalable, production-grade back-end systems at the core of our platform.
+Own mission-critical services from ideation through to deployment and long-term maintenance.
+Push the boundaries of applied AI by enabling new agent capabilities, workflows, and system behaviours.
+Shape engineering standards, architecture, and processes as we grow.
+Mentor and support engineers across the team, raising the bar for technical quality and ownership.
+Collaborate closely with product, design, and leadership to align technical direction with business outcomes.
+Our Tech Stack (so far) 💻
+We leverage a modern, scalable, and developer-friendly technology stack to build robust web applications:
+Frontend: React, Vue.js, Typescript
+Backend: Express.js, Node.js, Typescript
+Database: PostgreSQL, MongoDB
+Cloud Infrastructure: AWS, Vercel, Terraform, Kubernetes
+AI Coding Tools: Claude Code, Cursor, Codex and more
+What We’re Looking For
+🧠
+4+ years of hands-on software engineering experience (full-stack or back-end focussed), ideally within fast-paced, high-growth and complex technical environments.
+Experience designing and operating APIs (REST or GraphQL) and distributed systems.
+Passion for designing and building large scale, distributed and fault-tolerant systems for real-world users.
+Thrive in dynamic, high-performance start up settings and comfortable with ambiguity, rapid iteration, and taking initiative.
+Demonstrated ability to take full ownership of projects, solve complex problems, and consistently deliver high-quality, impactful results.
+Deep interest in artificial intelligence and excitement to build innovative, category-defining products.
+Regularly leverage AI tools and technologies in your workflow, and stay up-to-date with the latest advancements to boost productivity and innovation.
+Bonus Points if You Have Any Of The Following ⭐
+Experience building AI features leveraging LLMs, agent workflows, or AI infrastructure.
+Experience building enterprise features and systems — IAM, SSO, audit logs, compliance frameworks, or observability.
+Experience building integrations ecosystems or native third-party connectors.
+Contributions to open-source projects.
+Why Join Us? 🌟
+Work at the forefront of AI with a nimble team that is constantly pushing boundaries. We encourage and celebrate ideas that drive our mission forward.
+We're guided by our five values: truth-seeking, being empathetic, putting the customer first, iterating extremely fast, and building memories.
+We’ve set high standards in our high-trust, low-ego environment. We hire exceptional people to do the best work of their lives. In return, we reward our people with competitive salaries, equity stake, unparalleled professional growth, and career-defining opportunities.
+Relevance AI is well-funded by leading investors, including Bessemer Venture Partners, Insights Partners, Peak XV, and King River Capital.
+As an early team member, you’ll play a key role in shaping our future—including our culture, ways of working, and even the benefits we offer. We’re laying the foundations now, and your ideas can help define what comes next.
+Benefits ✨
+📈 ESOP – Employee Stock Ownership Plan so you can grow with the company
+🤖 AI Productivity Benefit – Get up to $1200 USD/year to spend on AI tools, courses, and learning resources that help you work smarter and grow your skills
+👶 Parental Leave – We offer 12 weeks of paid parental leave for all eligible new parents, and an additional 6 weeks for the birthing parent
+🎉 Milestone Merch – Celebrate your work anniversaries with customised Relevance AI swag
+🍿 Food, Drinks & Community – Stay energised with free breakfasts, healthy snacks, and a fully stocked fridge of drinks. Enjoy team lunches provided every Tuesday, Thursday and Friday, plus Uber Eats dinners and regular catered office meals throughout the week. As the home of the AI workforce, we also host vibrant community events featuring thought leaders, industry partners, and the wider tech community.
+🪩 Quarterly Team Events – Build stronger connections through fun, meaningful team bonding experiences every quarter
+🏓 Social Clubs – Share your hobbies and interests by joining or starting a club with your teammates. From hiking and chess to board game nights and social committee activities—there’s something for everyone!
+🧠 Sonder EAP – Access 24/7 mental health and wellbeing support through Sonder, our Employee Assistance Program

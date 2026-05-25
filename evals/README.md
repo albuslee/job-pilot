@@ -61,3 +61,18 @@ uv run jobpilot eval-batch --tailor
 # CI gate: fail if decision_accuracy drops below 0.8
 uv run jobpilot eval-batch --fail-under 0.8
 ```
+
+## Model benchmark (baseline v1, 2026-05-25)
+
+7 JDs, prompt v1, `_baseline_v1` frozen on sonnet-4.6.
+
+| Model | Accuracy | Score MAE | Cost (7 cases) | Latency p50 | Errors |
+|---|---|---|---|---|---|
+| **sonnet-4.6** (baseline) | 6/7 (86%) | 0.0 | $0.199 | 20s | 0 |
+| deepseek-v4-flash | 6/7 (86%) | 11.0 | $0.005 | 5s | 0 |
+| qwen (qwen3.5-35b) | 6/7 (86%) | 8.0 | $0.007 | 3s | 0 |
+| deepseek-v4-pro | 5/7 (71%) | 7.0 | $0.070 | 13s | 0 |
+| gemini-3.5-flash | 5/5 (100%) | 9.0 | $0.150 | 7.6s | 2 tool errors |
+| kimi-k2.6 | 2/7 (29%) | 13.0 | $0.051 | 22s | 5 tool errors |
+
+**Recommendation:** deepseek-v4-flash for daily use (same accuracy, 40× cheaper, 4× faster). Sonnet-4.6 for second opinions on borderline cases.

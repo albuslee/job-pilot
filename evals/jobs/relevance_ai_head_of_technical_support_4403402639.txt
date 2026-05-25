@@ -1,0 +1,46 @@
+Title: Head of Technical Support
+Company: Relevance AI
+Source: https://www.linkedin.com/jobs/view/4403402639/
+
+About the job:
+Location 📍:
+Sydney, AUS (Hybrid - 3 days in office required)
+About Us 🚀
+At Relevance AI, we’re building the home of the AI workforce.
+Our mission is simple: empower every team to delegate meaningful work to AI agents that think, act, and collaborate like experts.
+With Relevance AI, anyone can create and manage intelligent agents that handle workflows, decisions, and collaboration - all within one unified platform. Our technology already powers industry leaders such as Canva, Databricks, Confluent, Autodesk, Lightspeed, Aveva, Qualified, and Activision Blizzard, helping them scale excellence across operations, marketing, and sales.
+We’re backed by Bessemer Venture Partners, Insight Partners, Peak XV, and King River Capital, and raised our Series B in April 2025 to accelerate growth and push the boundaries of agentic automation.
+Headquartered in Sydney, SF & Barcelona, we operate on a hybrid model and thrive on curiosity, collaboration, and execution - we move fast, think big, and win together.
+In 2025, we were proud to be named LinkedIn’s #1 Startup in Australia.
+If you want to define how the world works with AI, join us.
+The Role 🥳
+Relevance AI is hiring a
+Head of Technical Support
+to lead and scale our enterprise-ready Global Technical Support function across three regions, delivering fast, high-quality resolutions and predictable customer experience at scale. This is a hands-on leadership role where you'll build a high-performing support organization, establish enterprise standards and processes, and define what AI-enabled support looks like at scale.
+You’ll be inheriting a small but mighty support team that have already scaled their AI automation to handle ~80% of tickets autonomously, while also redefining what support looks like in an AI first world, while also building AI agents, using tools like Claude Code to improve the product and fix bugs, and assist with our online community support and education initiatives.
+You'll tackle critical challenges: inconsistent support experiences across regions and time zones, the absence of enterprise SLA processes and predictable escalation frameworks, scaling global hiring and onboarding to enable 24/5 support, and implementing reporting and forecasting to improve product quality and guide resourcing decisions. You'll shape team structure across three regions, establish clear expectations, and partner closely with engineering and cross-functional teams to deliver excellent customer outcomes at global scale.
+The ideal candidate will have experience managing within a real enterprise support environment, ideally with exposure to 24/5 or 24/7 support operations, and must bring strong people leadership, sound operational judgment, and a forward-thinking approach to AI adoption in support.
+Your impact💥
+Scale a High-Performing Support Team: coach, and develop a strong support organization with clear standards, accountability, and room for growth.
+Strengthen Enterprise Support Operations: Help evolve our support model to meet the needs of increasingly complex enterprise customers and high-priority issues.
+Build for Global Coverage: Lead the team toward a more mature global support motion, with the foundations for 24/5 and progress toward 24/7 coverage.
+Improve Support Systems and Processes: Establish effective workflows, escalation paths, and operating rhythms that help the team resolve challenging issues efficiently.
+Drive AI Adoption in Support: Identify opportunities to use AI to improve self-service, team productivity, and the overall customer support experience.
+Partner Closely with Engineering: Work in close collaboration with engineering in Sydney to accelerate troubleshooting, feedback loops, and customer issue resolution.
+What We’re Looking For
+🧠
+Enterprise Support Leadership Experience: Proven experience leading within a real enterprise support function, with responsibility for team performance and customer outcomes.
+People Management Expertise: Track record of hiring, developing, and managing support professionals, with the ability to set expectations and build a strong team culture.
+Operational Support Knowledge: Familiarity with the rhythms of a scaled support environment, ideally including experience with 24/5 or 24/7 coverage models.
+AI Curiosity and Adoption Mindset: Strong interest in how AI can reshape support, with a practical willingness to experiment, learn, and improve how work gets done.
+Analytical and Systems Thinking: Comfort using support data, dashboards, and platform insights to guide decisions and improve team effectiveness.
+Builder Mentality: A hands-on, low-ego approach with the ability to improve not just people structures, but also processes, tooling, and the overall support operating model.
+Benefits ✨
+📈 ESOP – Employee Stock Ownership Plan so you can grow with the company
+🤖 AI Productivity Benefit – Get up to $1200 USD/year to spend on AI tools, courses, and learning resources that help you work smarter and grow your skills
+👶 Parental Leave – We offer 12 weeks of paid parental leave for all eligible new parents, and an additional 6 weeks for the birthing parent
+🎉 Milestone Merch – Celebrate your work anniversaries with customised Relevance AI swag
+🍿 Food, Drinks & Community – Stay energised with free breakfasts, healthy snacks, and a fully stocked fridge of drinks. Enjoy team lunches provided every Tuesday, Thursday and Friday, plus Uber Eats dinners and regular catered office meals throughout the week. As the home of the AI workforce, we also host vibrant community events featuring thought leaders, industry partners, and the wider tech community.
+🪩 Quarterly Team Events – Build stronger connections through fun, meaningful team bonding experiences every quarter
+🏓 Social Clubs – Share your hobbies and interests by joining or starting a club with your teammates. From hiking and chess to board game nights and social committee activities—there’s something for everyone!
+🧠 Sonder EAP – Access 24/7 mental health and wellbeing support through Sonder, our Employee Assistance Program
