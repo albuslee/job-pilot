@@ -48,7 +48,7 @@ async def run_batch(
         calls: list[CallTelemetry] = []
         try:
             with llm.record() as recorded:
-                calls = recorded                          # bind ref BEFORE any work; list is mutated in place
+                calls = recorded  # bind ref BEFORE any work; list is mutated in place
                 state: AgentState = {"job": case.jd}
                 out = await graph.ainvoke(state)
             elapsed_ms = (time.monotonic() - t0) * 1000.0
@@ -66,41 +66,85 @@ async def run_batch(
                 risk_flags=list(evaluation.risk_flags),
             )
             metrics = score_case(
-                expected=case.expected, actual=actual,
-                retrieved_chunk_ids=retrieved_ids, cited_chunk_texts=cited_texts,
+                expected=case.expected,
+                actual=actual,
+                retrieved_chunk_ids=retrieved_ids,
+                cited_chunk_texts=cited_texts,
             )
-            call_dtos = [CallTelemetryDTO(model=c.model, input_tokens=c.input_tokens,
-                                          output_tokens=c.output_tokens, latency_ms=c.latency_ms)
-                         for c in calls]
+            call_dtos = [
+                CallTelemetryDTO(
+                    model=c.model,
+                    input_tokens=c.input_tokens,
+                    output_tokens=c.output_tokens,
+                    latency_ms=c.latency_ms,
+                )
+                for c in calls
+            ]
             tot_in = sum(c.input_tokens for c in call_dtos)
             tot_out = sum(c.output_tokens for c in call_dtos)
             usd = cost(model, tot_in, tot_out, prices=prices) if prices is not None else None
             telemetry = CaseTelemetry(
-                latency_ms=elapsed_ms, calls=call_dtos,
-                input_tokens=tot_in, output_tokens=tot_out, estimated_usd=usd,
+                latency_ms=elapsed_ms,
+                calls=call_dtos,
+                input_tokens=tot_in,
+                output_tokens=tot_out,
+                estimated_usd=usd,
             )
-            records.append(EvalRecord(
-                stem=case.stem, ts=ts, prompt_version=prompt_version, model=model,
-                expected=case.expected, actual=actual, retrieved_chunk_ids=retrieved_ids,
-                metrics=metrics, telemetry=telemetry, error=None,
-            ))
-            log.info("eval.case_done", stem=case.stem, decision=actual.decision,
-                     score=actual.score, latency_ms=elapsed_ms)
+            records.append(
+                EvalRecord(
+                    stem=case.stem,
+                    ts=ts,
+                    prompt_version=prompt_version,
+                    model=model,
+                    expected=case.expected,
+                    actual=actual,
+                    retrieved_chunk_ids=retrieved_ids,
+                    metrics=metrics,
+                    telemetry=telemetry,
+                    error=None,
+                )
+            )
+            log.info(
+                "eval.case_done",
+                stem=case.stem,
+                decision=actual.decision,
+                score=actual.score,
+                latency_ms=elapsed_ms,
+            )
         except Exception as exc:
             elapsed_ms = (time.monotonic() - t0) * 1000.0
             # Preserve whatever telemetry was captured before the exception fired.
-            call_dtos = [CallTelemetryDTO(model=c.model, input_tokens=c.input_tokens,
-                                          output_tokens=c.output_tokens, latency_ms=c.latency_ms)
-                         for c in calls]
+            call_dtos = [
+                CallTelemetryDTO(
+                    model=c.model,
+                    input_tokens=c.input_tokens,
+                    output_tokens=c.output_tokens,
+                    latency_ms=c.latency_ms,
+                )
+                for c in calls
+            ]
             tot_in = sum(c.input_tokens for c in call_dtos)
             tot_out = sum(c.output_tokens for c in call_dtos)
             usd = cost(model, tot_in, tot_out, prices=prices) if prices is not None else None
-            records.append(EvalRecord(
-                stem=case.stem, ts=ts, prompt_version=prompt_version, model=model,
-                expected=case.expected, actual=None, retrieved_chunk_ids=[], metrics=None,
-                telemetry=CaseTelemetry(latency_ms=elapsed_ms, calls=call_dtos,
-                                        input_tokens=tot_in, output_tokens=tot_out, estimated_usd=usd),
-                error=CaseError(type=type(exc).__name__, message=str(exc)),
-            ))
+            records.append(
+                EvalRecord(
+                    stem=case.stem,
+                    ts=ts,
+                    prompt_version=prompt_version,
+                    model=model,
+                    expected=case.expected,
+                    actual=None,
+                    retrieved_chunk_ids=[],
+                    metrics=None,
+                    telemetry=CaseTelemetry(
+                        latency_ms=elapsed_ms,
+                        calls=call_dtos,
+                        input_tokens=tot_in,
+                        output_tokens=tot_out,
+                        estimated_usd=usd,
+                    ),
+                    error=CaseError(type=type(exc).__name__, message=str(exc)),
+                )
+            )
             log.warning("eval.case_failed", stem=case.stem, error=str(exc), exc_info=True)
     return records

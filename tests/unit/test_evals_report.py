@@ -20,24 +20,36 @@ from jobpilot.evals.report import (
 )
 
 
-def _record(stem: str, *, decision="apply", expected_decision="apply", score=80,
-            error=False) -> EvalRecord:
+def _record(
+    stem: str, *, decision="apply", expected_decision="apply", score=80, error=False
+) -> EvalRecord:
     expected = ExpectedOutcome(expected_decision=expected_decision, expected_score_band=(70, 90))  # type: ignore[arg-type]
     base = dict(
-        stem=stem, ts="2026-05-22T00:00:00Z", prompt_version="v1", model="m",
-        expected=expected, retrieved_chunk_ids=["c1"],
+        stem=stem,
+        ts="2026-05-22T00:00:00Z",
+        prompt_version="v1",
+        model="m",
+        expected=expected,
+        retrieved_chunk_ids=["c1"],
         telemetry=CaseTelemetry(
             latency_ms=1000.0,
-            calls=[CallTelemetryDTO(model="m", input_tokens=100, output_tokens=20, latency_ms=900.0)],
-            input_tokens=100, output_tokens=20, estimated_usd=0.001,
+            calls=[
+                CallTelemetryDTO(model="m", input_tokens=100, output_tokens=20, latency_ms=900.0)
+            ],
+            input_tokens=100,
+            output_tokens=20,
+            estimated_usd=0.001,
         ),
     )
     if error:
         from jobpilot.evals.metrics import CaseError
-        return EvalRecord(**base, actual=None, metrics=None,
-                          error=CaseError(type="RuntimeError", message="boom"))
-    actual = ActualOutcome(decision=decision, score=score, reasoning="r",
-                           cited_chunk_ids=["c1"], risk_flags=[])
+
+        return EvalRecord(
+            **base, actual=None, metrics=None, error=CaseError(type="RuntimeError", message="boom")
+        )
+    actual = ActualOutcome(
+        decision=decision, score=score, reasoning="r", cited_chunk_ids=["c1"], risk_flags=[]
+    )
     metrics = PerCaseMetrics(
         decision_correct=(decision == expected_decision),
         score_in_band=(70 <= score <= 90),
@@ -52,10 +64,16 @@ def _record(stem: str, *, decision="apply", expected_decision="apply", score=80,
 
 def _scored(records: list[EvalRecord]) -> ScoredBatch:
     from jobpilot.evals.metrics import aggregate
+
     return ScoredBatch(
-        config=BatchConfig(run_id="2026-05-22T00-00-00", ts="2026-05-22T00:00:00Z",
-                           model="claude-sonnet-4-6", prompt_version="v1",
-                           settings={"retrieval_k": 8}, git_sha="deadbeef"),
+        config=BatchConfig(
+            run_id="2026-05-22T00-00-00",
+            ts="2026-05-22T00:00:00Z",
+            model="claude-sonnet-4-6",
+            prompt_version="v1",
+            settings={"retrieval_k": 8},
+            git_sha="deadbeef",
+        ),
         records=records,
         aggregates=aggregate(records),
     )
@@ -98,9 +116,9 @@ def test_report_md_contains_summary(tmp_path: Path) -> None:
 def test_report_md_lists_failures_sorted_by_stem(tmp_path: Path) -> None:
     # Two failing cases: 'z' (score out of band) + 'a' (decision wrong)
     records = [
-        _record("z", score=60),                              # out-of-band
-        _record("a", decision="maybe"),                      # wrong decision
-        _record("b", score=80),                              # passes
+        _record("z", score=60),  # out-of-band
+        _record("a", decision="maybe"),  # wrong decision
+        _record("b", score=80),  # passes
     ]
     scored = _scored(records)
     out = tmp_path / "report.md"
@@ -142,8 +160,8 @@ def test_report_md_no_baseline_section(tmp_path: Path) -> None:
 def test_report_md_with_baseline_includes_delta_and_regressions(tmp_path: Path) -> None:
     from jobpilot.evals.compare import diff_runs
 
-    baseline = _scored([_record("x", decision="apply", score=80)])    # pass
-    candidate = _scored([_record("x", decision="maybe", score=60)])   # fail
+    baseline = _scored([_record("x", decision="apply", score=80)])  # pass
+    candidate = _scored([_record("x", decision="maybe", score=60)])  # fail
     cmp = diff_runs(baseline, candidate)
 
     out = tmp_path / "report.md"

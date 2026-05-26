@@ -17,14 +17,17 @@ async def test_build_graph_without_tailor_routes_directly_to_end(settings: Setti
     """When tailor is None, the graph stops after evaluate regardless of score."""
     evaluator = MagicMock()
     # Even with a very high score, no tailor node exists so tailored stays None
-    evaluator.run = AsyncMock(return_value=AgentState(
-        job=JobDescription(source="a.txt", body="jd"),
-        retrieved=[],
-        evaluation=EvaluationResult(score=99, decision="apply", reasoning="r",
-                                    cited_chunk_ids=[], risk_flags=[]),
-        tailored=None,
-        output_paths={},
-    ))
+    evaluator.run = AsyncMock(
+        return_value=AgentState(
+            job=JobDescription(source="a.txt", body="jd"),
+            retrieved=[],
+            evaluation=EvaluationResult(
+                score=99, decision="apply", reasoning="r", cited_chunk_ids=[], risk_flags=[]
+            ),
+            tailored=None,
+            output_paths={},
+        )
+    )
 
     graph = build_graph(settings=settings, evaluator=evaluator, tailor=None)
     out = await graph.ainvoke({"job": JobDescription(source="a.txt", body="jd")})
@@ -37,14 +40,17 @@ async def test_build_graph_without_tailor_routes_directly_to_end(settings: Setti
 async def test_build_graph_with_tailor_unchanged(settings: Settings) -> None:
     """Smoke check: tailor is still optional positional behavior in the not-None path."""
     evaluator = MagicMock()
-    evaluator.run = AsyncMock(return_value=AgentState(
-        job=JobDescription(source="a.txt", body="jd"),
-        retrieved=[],
-        evaluation=EvaluationResult(score=10, decision="skip", reasoning="r",
-                                    cited_chunk_ids=[], risk_flags=[]),
-        tailored=None,
-        output_paths={},
-    ))
+    evaluator.run = AsyncMock(
+        return_value=AgentState(
+            job=JobDescription(source="a.txt", body="jd"),
+            retrieved=[],
+            evaluation=EvaluationResult(
+                score=10, decision="skip", reasoning="r", cited_chunk_ids=[], risk_flags=[]
+            ),
+            tailored=None,
+            output_paths={},
+        )
+    )
     tailor = MagicMock()
     tailor.run = AsyncMock()
 
