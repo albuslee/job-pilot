@@ -1,6 +1,9 @@
 # macOS System Files
 .DS_Store
 
+# Superpowers skill artifacts
+docs/superpowers/
+
 # Python
 __pycache__/
 *.py[cod]
