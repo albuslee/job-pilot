@@ -115,36 +115,59 @@ def write_report_md(
 
     if baseline is not None and comparison is not None:
         from jobpilot.evals.compare import render_comparison_section
+
         lines.append(render_comparison_section(baseline, scored, comparison))
 
     # Summary table
     lines.append("## Summary")
     rows = [
-        ("decision_accuracy",
-         f"{agg.decision_correct_count}/{agg.decision_total} ({_fmt_pct(agg.decision_accuracy)})"),
-        ("score_mae",
-         f"{agg.score_mae:.1f} (n={agg.score_mae_n})" if agg.score_mae is not None else "n/a"),
-        ("score_in_band_rate",
-         f"{agg.score_in_band_count}/{agg.score_band_total} ({_fmt_pct(agg.score_in_band_rate)})"
-         if agg.score_band_total else "n/a"),
-        ("citation_evidence_pass_rate",
-         f"{agg.citation_evidence_count}/{agg.citation_evidence_total} "
-         f"({_fmt_pct(agg.citation_evidence_pass_rate)})"
-         if agg.citation_evidence_total else "n/a"),
-        ("required_risk_flags_pass_rate",
-         f"{agg.required_risk_flags_count}/{agg.required_risk_flags_total} "
-         f"({_fmt_pct(agg.required_risk_flags_pass_rate)})"
-         if agg.required_risk_flags_total else "n/a"),
-        ("disallowed_risk_flags_pass_rate",
-         f"{agg.disallowed_risk_flags_count}/{agg.disallowed_risk_flags_total} "
-         f"({_fmt_pct(agg.disallowed_risk_flags_pass_rate)})"
-         if agg.disallowed_risk_flags_total else "n/a"),
-        ("p50 latency / p95",
-         f"{agg.p50_latency_ms / 1000.0:.1f}s / {agg.p95_latency_ms / 1000.0:.1f}s"),
+        (
+            "decision_accuracy",
+            f"{agg.decision_correct_count}/{agg.decision_total} ({_fmt_pct(agg.decision_accuracy)})",
+        ),
+        (
+            "score_mae",
+            f"{agg.score_mae:.1f} (n={agg.score_mae_n})" if agg.score_mae is not None else "n/a",
+        ),
+        (
+            "score_in_band_rate",
+            f"{agg.score_in_band_count}/{agg.score_band_total} ({_fmt_pct(agg.score_in_band_rate)})"
+            if agg.score_band_total
+            else "n/a",
+        ),
+        (
+            "citation_evidence_pass_rate",
+            f"{agg.citation_evidence_count}/{agg.citation_evidence_total} "
+            f"({_fmt_pct(agg.citation_evidence_pass_rate)})"
+            if agg.citation_evidence_total
+            else "n/a",
+        ),
+        (
+            "required_risk_flags_pass_rate",
+            f"{agg.required_risk_flags_count}/{agg.required_risk_flags_total} "
+            f"({_fmt_pct(agg.required_risk_flags_pass_rate)})"
+            if agg.required_risk_flags_total
+            else "n/a",
+        ),
+        (
+            "disallowed_risk_flags_pass_rate",
+            f"{agg.disallowed_risk_flags_count}/{agg.disallowed_risk_flags_total} "
+            f"({_fmt_pct(agg.disallowed_risk_flags_pass_rate)})"
+            if agg.disallowed_risk_flags_total
+            else "n/a",
+        ),
+        (
+            "p50 latency / p95",
+            f"{agg.p50_latency_ms / 1000.0:.1f}s / {agg.p95_latency_ms / 1000.0:.1f}s",
+        ),
         ("total tokens (in / out)", f"{agg.total_input_tokens:,} / {agg.total_output_tokens:,}"),
         ("total cost", _fmt_usd(agg.total_usd)),
-        ("mean cost / known case",
-         _fmt_usd(agg.mean_usd_per_known_case) if agg.mean_usd_per_known_case is not None else "n/a"),
+        (
+            "mean cost / known case",
+            _fmt_usd(agg.mean_usd_per_known_case)
+            if agg.mean_usd_per_known_case is not None
+            else "n/a",
+        ),
         ("errors", str(agg.n_errors)),
     ]
     lines.append("| metric | value |")

@@ -1,6 +1,9 @@
 # macOS System Files
 .DS_Store
 
+# IDE
+.vscode/
+
 # Superpowers skill artifacts
 docs/superpowers/
 

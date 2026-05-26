@@ -210,11 +210,7 @@ def aggregate(records: list[EvalRecord]) -> BatchAggregates:
     score_in_band_count = sum(1 for _, m in score_pairs if m.score_in_band)
     score_band_total = len(score_pairs)
     score_in_band_rate = (score_in_band_count / score_band_total) if score_band_total else None
-    score_mae_values = [
-        m.score_abs_error
-        for _, m in score_pairs
-        if m.score_abs_error is not None
-    ]
+    score_mae_values = [m.score_abs_error for _, m in score_pairs if m.score_abs_error is not None]
     score_mae = (sum(score_mae_values) / len(score_mae_values)) if score_mae_values else None
 
     def _flag_pass_rate(attr: str) -> tuple[float | None, int, int]:
@@ -234,7 +230,9 @@ def aggregate(records: list[EvalRecord]) -> BatchAggregates:
 
     total_input_tokens = sum(r.telemetry.input_tokens for r in records)
     total_output_tokens = sum(r.telemetry.output_tokens for r in records)
-    known_costs = [r.telemetry.estimated_usd for r in records if r.telemetry.estimated_usd is not None]
+    known_costs = [
+        r.telemetry.estimated_usd for r in records if r.telemetry.estimated_usd is not None
+    ]
     total_usd: float | None
     mean_usd_per_known_case: float | None
     if known_costs:

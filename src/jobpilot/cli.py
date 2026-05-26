@@ -194,8 +194,7 @@ def eval_batch_cmd(
 
     store = _build_store()
     llm = LLMClient(settings=settings)
-    evaluator = EvaluatorAgent(settings=settings, llm=llm, rag=store,
-                               prompt_version=prompt_version)
+    evaluator = EvaluatorAgent(settings=settings, llm=llm, rag=store, prompt_version=prompt_version)
     if with_tailor:
         pool = load_bullet_pool(settings.bullet_pool_path)
         tailor = TailorAgent(settings=settings, llm=llm, rag=store, pool=pool)
@@ -203,10 +202,16 @@ def eval_batch_cmd(
     else:
         graph = build_graph(settings=settings, evaluator=evaluator, tailor=None)
 
-    records = asyncio.run(run_batch(
-        cases=cases, graph=graph, llm=llm,  # type: ignore[arg-type]
-        prompt_version=prompt_version, model=settings.llm_model, prices=prices,
-    ))
+    records = asyncio.run(
+        run_batch(
+            cases=cases,
+            graph=graph,  # type: ignore[arg-type]
+            llm=llm,
+            prompt_version=prompt_version,
+            model=settings.llm_model,
+            prices=prices,
+        )
+    )
 
     ts = datetime.now(UTC)
     run_id = ts.strftime("%Y-%m-%dT%H-%M-%S")
@@ -215,7 +220,10 @@ def eval_batch_cmd(
 
     try:
         git_sha: str | None = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True,
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
             timeout=2,
         ).stdout.strip()
     except Exception:
@@ -223,10 +231,14 @@ def eval_batch_cmd(
 
     scored = ScoredBatch(
         config=BatchConfig(
-            run_id=run_id, ts=ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            model=settings.llm_model, prompt_version=prompt_version,
-            settings={"retrieval_k": settings.retrieval_k,
-                      "score_threshold": settings.score_threshold},
+            run_id=run_id,
+            ts=ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            model=settings.llm_model,
+            prompt_version=prompt_version,
+            settings={
+                "retrieval_k": settings.retrieval_k,
+                "score_threshold": settings.score_threshold,
+            },
             git_sha=git_sha,
         ),
         records=records,
@@ -241,17 +253,18 @@ def eval_batch_cmd(
 
     write_results_jsonl(scored, out_dir / "results.jsonl")
     write_meta_yaml(scored, out_dir / "meta.yaml")
-    write_report_md(scored, out_dir / "report.md",
-                    baseline=base_scored, comparison=comparison)
+    write_report_md(scored, out_dir / "report.md", baseline=base_scored, comparison=comparison)
 
     # Terse stdout
     a = scored.aggregates
     score_mae_str = "None" if a.score_mae is None else f"{a.score_mae:.1f}"
     total_usd_str = f"${a.total_usd:.4f}" if a.total_usd is not None else "n/a"
-    typer.echo(f"n_cases={a.n_cases}  errors={a.n_errors}  "
-               f"decision_accuracy={a.decision_accuracy:.2f}  "
-               f"score_mae={score_mae_str}  "
-               f"total_usd={total_usd_str}")
+    typer.echo(
+        f"n_cases={a.n_cases}  errors={a.n_errors}  "
+        f"decision_accuracy={a.decision_accuracy:.2f}  "
+        f"score_mae={score_mae_str}  "
+        f"total_usd={total_usd_str}"
+    )
     typer.echo(f"report: {out_dir / 'report.md'}")
 
     if fail_under is not None and scored.aggregates.decision_accuracy < fail_under:

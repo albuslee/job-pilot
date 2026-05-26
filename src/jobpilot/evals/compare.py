@@ -51,9 +51,13 @@ def _passes(rec: EvalRecord) -> bool:
         return False
     m = rec.metrics
     return not any(
-        v is False for v in (
-            m.decision_correct, m.score_in_band, m.citation_evidence_ok,
-            m.required_risk_flags_present, m.disallowed_risk_flags_absent,
+        v is False
+        for v in (
+            m.decision_correct,
+            m.score_in_band,
+            m.citation_evidence_ok,
+            m.required_risk_flags_present,
+            m.disallowed_risk_flags_absent,
             m.cited_chunks_retrieved,
         )
     )
@@ -107,19 +111,28 @@ def diff_runs(baseline: ScoredBatch, candidate: ScoredBatch) -> ComparisonReport
     ba = baseline.aggregates
     ca = candidate.aggregates
     delta_table = [
-        DeltaRow(metric="decision_accuracy",
-                 baseline=f"{ba.decision_correct_count}/{ba.decision_total}",
-                 candidate=f"{ca.decision_correct_count}/{ca.decision_total}",
-                 delta=_fmt_pp_delta(ba.decision_accuracy, ca.decision_accuracy)),
-        DeltaRow(metric="score_mae",
-                 baseline=f"{ba.score_mae:.1f}" if ba.score_mae is not None else "n/a",
-                 candidate=f"{ca.score_mae:.1f}" if ca.score_mae is not None else "n/a",
-                 delta=(f"{ca.score_mae - ba.score_mae:+.1f}"
-                        if ba.score_mae is not None and ca.score_mae is not None else "n/a")),
-        DeltaRow(metric="total_usd",
-                 baseline=_fmt_usd(ba.total_usd),
-                 candidate=_fmt_usd(ca.total_usd),
-                 delta=_fmt_usd_delta(ba.total_usd, ca.total_usd)),
+        DeltaRow(
+            metric="decision_accuracy",
+            baseline=f"{ba.decision_correct_count}/{ba.decision_total}",
+            candidate=f"{ca.decision_correct_count}/{ca.decision_total}",
+            delta=_fmt_pp_delta(ba.decision_accuracy, ca.decision_accuracy),
+        ),
+        DeltaRow(
+            metric="score_mae",
+            baseline=f"{ba.score_mae:.1f}" if ba.score_mae is not None else "n/a",
+            candidate=f"{ca.score_mae:.1f}" if ca.score_mae is not None else "n/a",
+            delta=(
+                f"{ca.score_mae - ba.score_mae:+.1f}"
+                if ba.score_mae is not None and ca.score_mae is not None
+                else "n/a"
+            ),
+        ),
+        DeltaRow(
+            metric="total_usd",
+            baseline=_fmt_usd(ba.total_usd),
+            candidate=_fmt_usd(ca.total_usd),
+            delta=_fmt_usd_delta(ba.total_usd, ca.total_usd),
+        ),
     ]
 
     added = sorted(set(cand_by_stem) - set(base_by_stem))
@@ -169,7 +182,9 @@ def render_comparison_section(
     for row in cmp.delta_table:
         lines.append(f"| {row.metric} | {row.baseline} | {row.candidate} | {row.delta} |")
     lines.append("")
-    lines.append(f"## Regressions ({len(cmp.regressions)})  *(passed in baseline, fail in candidate)*")
+    lines.append(
+        f"## Regressions ({len(cmp.regressions)})  *(passed in baseline, fail in candidate)*"
+    )
     for r in cmp.regressions:
         lines.append(f"### {r.stem}")
         lines.append(f"- baseline: decision={r.baseline_decision}, score={r.baseline_score} ✓")
