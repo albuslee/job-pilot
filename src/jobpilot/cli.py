@@ -22,6 +22,11 @@ from jobpilot.rag.ingest import ingest_profile_dir
 from jobpilot.rag.store import RagStore
 from jobpilot.tools.bullet_pool import load_bullet_pool
 from jobpilot.tools.docx_writer import render_cv
+from jobpilot.tools.linkedin_jd import (
+    default_output_path,
+    fetch_linkedin_job,
+    write_job_description,
+)
 
 # Backwards-compat alias kept so existing tests that patch `jobpilot.cli.AnthropicClient` still work.
 AnthropicClient = LLMClient
@@ -94,6 +99,76 @@ def evaluate_cmd(
         typer.echo(f"cited_chunks: {', '.join(result.cited_chunk_ids)}")
     if result.risk_flags:
         typer.echo(f"risk_flags: {', '.join(result.risk_flags)}")
+
+
+@app.command(name="scrape-eval")
+def scrape_eval_cmd(
+    url: str = typer.Argument(..., help="Public LinkedIn job URL."),
+    jobs_dir: Path = typer.Option(Path("evals/jobs"), "--jobs-dir"),
+    labels_dir: Path = typer.Option(Path("evals/labels"), "--labels-dir"),
+    force: bool = typer.Option(False, "--force", help="Overwrite existing JD and label files."),
+    timeout: int = typer.Option(20, "--timeout", help="HTTP fetch timeout in seconds."),
+) -> None:
+    """Scrape a LinkedIn JD, save to evals/jobs/, create a stub label, and run the evaluator."""
+    import yaml
+
+    settings = get_settings()
+    configure_logging(settings.log_format)
+
+    typer.echo(f"Fetching {url} ...")
+    try:
+        job = fetch_linkedin_job(url, timeout=timeout)
+    except Exception as exc:
+        typer.echo(f"Error fetching JD: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    jd_path = default_output_path(job, output_dir=jobs_dir)
+    stem = jd_path.stem
+    label_path = labels_dir / f"{stem}.yaml"
+
+    if jd_path.exists() and not force:
+        typer.echo(f"JD already exists: {jd_path}  (pass --force to overwrite)")
+        raise typer.Exit(code=1)
+
+    jobs_dir.mkdir(parents=True, exist_ok=True)
+    write_job_description(job, jd_path)
+    typer.echo(f"Saved JD → {jd_path}")
+
+    labels_dir.mkdir(parents=True, exist_ok=True)
+    if not label_path.exists() or force:
+        stub = {
+            "expected_decision": "apply",
+            "notes": "Starter label — owner verifies after first run.",
+        }
+        label_path.write_text(yaml.dump(stub, sort_keys=False), encoding="utf-8")
+        typer.echo(f"Created label → {label_path}")
+    else:
+        typer.echo(f"Existing label kept → {label_path}")
+
+    jd = JobDescription(source=jd_path.name, body=jd_path.read_text(encoding="utf-8"))
+    store = _build_store()
+    llm = LLMClient(settings=settings)
+    agent = EvaluatorAgent(settings=settings, llm=llm, rag=store)
+    state: AgentState = {"job": jd}
+
+    out = asyncio.run(agent.run(state))
+    result = out["evaluation"]
+    assert result is not None
+
+    typer.echo(f"\nscore={result.score}  decision={result.decision}")
+    typer.echo("reasoning:")
+    typer.echo(result.reasoning)
+    if result.cited_chunk_ids:
+        typer.echo(f"cited_chunks: {', '.join(result.cited_chunk_ids)}")
+    if result.risk_flags:
+        typer.echo(f"risk_flags: {', '.join(result.risk_flags)}")
+
+    if result.decision != "apply":
+        typer.echo(
+            f"\nHint: model decision is '{result.decision}' but label defaults to 'apply'."
+            f"\nUpdate {label_path} if this matches your judgement:"
+            f"\n  expected_decision: {result.decision}"
+        )
 
 
 @app.command(name="run")

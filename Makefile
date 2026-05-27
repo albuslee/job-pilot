@@ -1,4 +1,4 @@
-.PHONY: setup test test-all lint lint-fix typecheck ingest eval eval-batch run generate-pool
+.PHONY: setup test test-all lint lint-fix typecheck ingest eval scrape-eval eval-batch run generate-pool
 
 setup:
 	uv sync
@@ -25,6 +25,10 @@ ingest:
 eval:
 	@if [ -z "$(JD)" ]; then echo "Usage: make eval JD=evals/jobs/canva_fullstack.txt"; exit 1; fi
 	uv run jobpilot eval $(JD)
+
+scrape-eval:
+	@if [ -z "$(URL)" ]; then echo "Usage: make scrape-eval URL=https://www.linkedin.com/jobs/view/..."; exit 1; fi
+	uv run jobpilot scrape-eval $(URL) $(ARGS)
 
 eval-batch:
 	uv run jobpilot eval-batch $(ARGS)
