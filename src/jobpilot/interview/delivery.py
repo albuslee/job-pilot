@@ -25,7 +25,7 @@ DEFAULT_FILLERS: tuple[str, ...] = (
     "right",
 )
 
-_WORD_RE = re.compile(r"[a-z']+")
+_WORD_RE = re.compile(r"\w+")
 _MAX_TOP_FILLERS = 5
 
 
