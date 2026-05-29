@@ -77,8 +77,8 @@ class TailoredCV(BaseModel):
 class InterviewQuestion(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    id: str
-    category: str
+    id: str = Field(..., min_length=1)
+    category: str = Field(..., min_length=1)
     text: str = Field(..., min_length=1)
     guidance: str | None = None
 
@@ -92,12 +92,16 @@ class Word(BaseModel):
 
 
 class Transcript(BaseModel):
+    """Raw STT-adapter output (tools/transcribe.py): transcribed text + word timestamps."""
+
     text: str
     words: list[Word] = Field(default_factory=list)
     duration_s: float | None = None
 
 
 class CapturedAnswer(BaseModel):
+    """Unified result of AnswerSource.capture(): a Transcript's content plus pitch samples and the capture source (mic vs typed)."""
+
     transcript: str
     words: list[Word] = Field(default_factory=list)
     duration_s: float | None = None
