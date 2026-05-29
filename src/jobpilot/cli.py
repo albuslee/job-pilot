@@ -10,9 +10,19 @@ import typer
 
 from jobpilot import __version__
 from jobpilot.agents.evaluator import EvaluatorAgent
+from jobpilot.agents.interview_coach import InterviewCoachAgent
+from jobpilot.agents.interviewer import InterviewerAgent
 from jobpilot.agents.orchestrator import build_graph
 from jobpilot.agents.tailor import TailorAgent
 from jobpilot.config import get_settings
+from jobpilot.interview.questions import load_question_bank
+from jobpilot.interview.report import default_report_path, write_interview_report
+from jobpilot.interview.session import (
+    RecordingAnswerSource,
+    TypedAnswerSource,
+    run_drill,
+    run_mock,
+)
 from jobpilot.llm.client import LLMClient
 from jobpilot.logging_setup import configure_logging, get_logger
 from jobpilot.models.schemas import JobDescription
@@ -228,6 +238,53 @@ def run_cmd(
     typer.echo(f"tailored CV → {output_path}")
     typer.echo(f"target: {tailored.target_company} / {tailored.target_role}")
     typer.echo(f"selected_bullets: {', '.join(tailored.current_role_bullet_ids)}")
+
+
+@app.command(name="interview")
+def interview_cmd(
+    mode: str = typer.Option("drill", "--mode", help="drill (feedback per answer) or mock (follow-ups + summary)."),
+    category: str | None = typer.Option(None, "--category", help="Filter seed questions by category."),
+    num: int = typer.Option(3, "--num", help="Number of seed questions."),
+    text: bool = typer.Option(False, "--text", help="Type answers instead of using the mic."),
+    no_save: bool = typer.Option(False, "--no-save", help="Skip writing the markdown report."),
+) -> None:
+    """Rehearse interview answers and get CV-grounded feedback."""
+    settings = get_settings()
+    configure_logging(settings.log_format)
+
+    if mode not in ("drill", "mock"):
+        typer.echo(f"Unknown mode '{mode}' (expected drill|mock).", err=True)
+        raise typer.Exit(code=1)
+
+    example_path = settings.interview_questions_path.with_name(
+        settings.interview_questions_path.stem
+        + ".example"
+        + settings.interview_questions_path.suffix
+    )
+    bank = load_question_bank(settings.interview_questions_path, example_path=example_path)
+    questions = bank.pick(num, category=category)
+    if not questions:
+        typer.echo("No questions matched. Check --category / the question bank.", err=True)
+        raise typer.Exit(code=1)
+
+    store = _build_store()
+    llm = LLMClient(settings=settings)
+    coach = InterviewCoachAgent(settings=settings, llm=llm, rag=store)
+    source = TypedAnswerSource() if text else RecordingAnswerSource(settings=settings)
+
+    if mode == "mock":
+        interviewer = InterviewerAgent(settings=settings, llm=llm)
+        turns, summary = run_mock(
+            questions, source=source, coach=coach, interviewer=interviewer, settings=settings
+        )
+    else:
+        turns = run_drill(questions, source=source, coach=coach, settings=settings)
+        summary = None
+
+    if not no_save:
+        out = default_report_path(settings.output_dir)
+        write_interview_report(turns, out, mode=mode, summary=summary)
+        typer.echo(f"\nreport → {out}")
 
 
 # ---- eval-batch ----------------------------------------------------------------
