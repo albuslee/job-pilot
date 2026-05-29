@@ -22,7 +22,7 @@ def test_wpm_none_without_duration() -> None:
 def test_filler_counting_and_top() -> None:
     text = "um so like I basically um you know finished it like right"
     m = compute_delivery_metrics(text, [], 10.0, [])
-    assert m.filler_count >= 5
+    assert m.filler_count == 7
     top = {f.word: f.count for f in m.top_fillers}
     assert top["um"] == 2
     assert top["like"] == 2
@@ -81,3 +81,16 @@ def test_pitch_all_unvoiced_yields_none() -> None:
 
 def test_default_fillers_is_tuple() -> None:
     assert "you know" in DEFAULT_FILLERS
+
+
+def test_custom_fillers_override() -> None:
+    m = compute_delivery_metrics("yep yep yep", [], 3.0, [], fillers=("yep",))
+    assert m.filler_count == 3
+    assert m.top_fillers[0].word == "yep"
+
+
+def test_overlapping_word_timestamps_yield_no_pauses() -> None:
+    words = [_w("a", 0.0, 1.0), _w("b", 0.5, 1.5)]  # gap = 0.5 - 1.0 = -0.5 (overlap)
+    m = compute_delivery_metrics("a b", words, 1.5, [])
+    assert m.long_pause_count == 0
+    assert m.longest_pause_s is None

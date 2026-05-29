@@ -67,7 +67,7 @@ def _pitch_metrics(
         return None, None, None, None
     mean_hz = statistics.mean(voiced)
     rng = max(voiced) - min(voiced)
-    if mean_hz <= 0.0:  # defensive; voiced are >0 so unreachable, but guards log2
+    if mean_hz <= 0.0:  # defensive; voiced samples are >0 so unreachable, but guards log2 (intentionally uncovered)
         return round(mean_hz, 1), round(rng, 1), None, None
     semitones = [12.0 * math.log2(f / mean_hz) for f in voiced]
     std_st = statistics.pstdev(semitones)  # 0.0 for single/identical samples
