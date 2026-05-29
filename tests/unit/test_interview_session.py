@@ -56,6 +56,7 @@ def test_run_drill_one_turn_per_question(settings: Settings) -> None:
     assert turns[0].transcript == "answer 0"
     assert coach.run.call_count == 2
     assert turns[0].metrics.word_count == 2
+    assert source.prompts == ["Question 0?", "Question 1?"]
 
 
 def test_run_mock_adds_followups_then_stops(settings: Settings) -> None:
@@ -111,6 +112,24 @@ def test_build_session_summary_aggregates_and_dedupes() -> None:
     assert summary.top_strengths.count("clear") == 1  # deduped
     assert "add metrics" in summary.top_improvements
     assert summary.overall
+
+
+def test_build_session_summary_skips_none_feedback() -> None:
+    from jobpilot.models.schemas import DeliveryMetrics, InterviewQuestion, InterviewTurn
+
+    m = DeliveryMetrics(
+        word_count=1, duration_s=None, wpm=None, filler_count=0, top_fillers=[],
+        long_pause_count=0, longest_pause_s=None, mean_pitch_hz=None,
+        pitch_range_hz=None, pitch_std_semitones=None, monotone=None,
+    )
+    none_turn = InterviewTurn(
+        question=InterviewQuestion(id="q", category="fit", text="?"),
+        transcript="x", metrics=m, feedback=None,
+    )
+    turns = [_turn_with(["clear"], ["slow down"]), none_turn]
+    summary = build_session_summary(turns)
+    assert summary.top_strengths == ["clear"]  # none_turn contributed nothing
+    assert "1/2" in summary.overall  # answered 1 of 2 turns
 
 
 def test_typed_answer_source_reads_input() -> None:

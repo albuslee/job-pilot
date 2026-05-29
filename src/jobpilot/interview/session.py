@@ -128,6 +128,12 @@ def run_mock(
     return turns, build_session_summary(turns)
 
 
+def _top_items(counts: Counter[str]) -> list[str]:
+    """Most frequent first, ties broken alphabetically for deterministic output."""
+    ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    return [item for item, _ in ordered[:_MAX_SUMMARY_ITEMS]]
+
+
 def build_session_summary(turns: list[InterviewTurn]) -> SessionSummary:
     """Aggregate per-turn grounded feedback into a session-level summary.
 
@@ -142,14 +148,14 @@ def build_session_summary(turns: list[InterviewTurn]) -> SessionSummary:
         strengths.update(t.feedback.strengths)
         improvements.update(t.feedback.improvements)
 
-    top_strengths = [item for item, _ in strengths.most_common(_MAX_SUMMARY_ITEMS)]
-    top_improvements = [item for item, _ in improvements.most_common(_MAX_SUMMARY_ITEMS)]
+    top_strengths = _top_items(strengths)
+    top_improvements = _top_items(improvements)
     answered = sum(
         1 for t in turns if t.feedback is not None and t.feedback.answered_question
     )
     overall = (
         f"Answered {answered}/{len(turns)} questions on-topic. "
-        f"{len(top_strengths)} recurring strength(s), "
+        f"{len(top_strengths)} notable strength(s), "
         f"{len(top_improvements)} area(s) to improve."
     )
     return SessionSummary(
