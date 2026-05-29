@@ -1,0 +1,32 @@
+# Interview question bank template — seed questions for `jobpilot interview`.
+#
+# To customise:
+#   1. cp data/interview_questions.example.yaml data/interview_questions.yaml
+#   2. Edit data/interview_questions.yaml (gitignored; this .example is committed).
+# Each question: id (unique), category, text, optional guidance.
+
+questions:
+  - id: why_leave
+    category: motivational
+    text: "Why do you want to leave your current role?"
+    guidance: "Forward-looking, no badmouthing; tie to growth/fit."
+  - id: next_role
+    category: motivational
+    text: "What are you looking for in your next role?"
+    guidance: "Connect to concrete experiences and the kind of impact you want."
+  - id: strength
+    category: behavioral
+    text: "Tell me about a strength and a concrete example of it."
+    guidance: "Pick one strength; back it with a specific situation and result."
+  - id: weakness
+    category: behavioral
+    text: "What is a weakness you are actively working on?"
+    guidance: "Be honest; show self-awareness and the steps you are taking."
+  - id: proud_project
+    category: behavioral
+    text: "Walk me through a project you are most proud of."
+    guidance: "Situation, your specific role, the actions, and measurable outcome."
+  - id: why_us
+    category: fit
+    text: "Why are you interested in this company / team?"
+    guidance: "Tie your experience and goals to what the role actually involves."

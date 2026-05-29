@@ -27,6 +27,7 @@ data/profile/
 data/profile*/
 data/cv_template.docx
 data/bullet_pool.yaml
+data/interview_questions.yaml
 output/
 .chroma/
 .chroma*/
