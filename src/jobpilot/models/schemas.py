@@ -69,3 +69,84 @@ class TailoredCV(BaseModel):
     summary: str = Field(..., min_length=1)
     skills_lines: list[str] = Field(..., min_length=1)
     current_role_bullet_ids: list[str] = Field(..., min_length=1)
+
+
+# ---- Interview practice (Coach mode) ----------------------------------------
+
+
+class InterviewQuestion(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    id: str
+    category: str
+    text: str = Field(..., min_length=1)
+    guidance: str | None = None
+
+
+class Word(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    text: str
+    start: float
+    end: float
+
+
+class Transcript(BaseModel):
+    text: str
+    words: list[Word] = Field(default_factory=list)
+    duration_s: float | None = None
+
+
+class CapturedAnswer(BaseModel):
+    transcript: str
+    words: list[Word] = Field(default_factory=list)
+    duration_s: float | None = None
+    pitch_hz: list[float] = Field(default_factory=list)
+    source: Literal["audio", "text"]
+
+
+class FillerStat(BaseModel):
+    word: str
+    count: int
+
+
+class DeliveryMetrics(BaseModel):
+    word_count: int
+    duration_s: float | None
+    wpm: float | None
+    filler_count: int
+    top_fillers: list[FillerStat] = Field(default_factory=list)
+    long_pause_count: int
+    longest_pause_s: float | None
+    mean_pitch_hz: float | None
+    pitch_range_hz: float | None
+    pitch_std_semitones: float | None
+    monotone: bool | None
+
+
+class AnswerFeedback(BaseModel):
+    answered_question: bool
+    structure_notes: str = Field(..., min_length=1)
+    strengths: list[str] = Field(default_factory=list)
+    improvements: list[str] = Field(default_factory=list)
+    unsupported_claims: list[str] = Field(default_factory=list)
+    missed_experiences: list[str] = Field(default_factory=list)
+    cited_chunk_ids: list[str] = Field(default_factory=list)
+
+
+class FollowUp(BaseModel):
+    should_continue: bool
+    question: str | None = None
+
+
+class InterviewTurn(BaseModel):
+    question: InterviewQuestion
+    transcript: str
+    metrics: DeliveryMetrics
+    feedback: AnswerFeedback | None = None
+
+
+class SessionSummary(BaseModel):
+    overall: str = Field(..., min_length=1)
+    top_strengths: list[str] = Field(default_factory=list)
+    top_improvements: list[str] = Field(default_factory=list)
