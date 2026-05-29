@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 EmbeddingProvider = Literal["voyage", "openai", "ollama"]
 LogFormat = Literal["console", "json"]
+WhisperBackend = Literal["local", "openai"]
 
 
 class Settings(BaseSettings):
@@ -52,6 +53,14 @@ class Settings(BaseSettings):
     retrieval_k: int = 8
     smart_docx_ingest: bool = False
     log_format: LogFormat = "console"
+
+    # Interview practice (Coach mode)
+    interview_questions_path: Path = Path("data/interview_questions.yaml")
+    whisper_backend: WhisperBackend = "local"
+    whisper_model: str = "base.en"
+    interview_followups: int = 2
+    pause_threshold_s: float = 1.5
+    monotone_std_threshold_semitones: float = 1.5
 
 
 def get_settings() -> Settings:
