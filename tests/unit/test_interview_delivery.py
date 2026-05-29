@@ -94,3 +94,15 @@ def test_overlapping_word_timestamps_yield_no_pauses() -> None:
     m = compute_delivery_metrics("a b", words, 1.5, [])
     assert m.long_pause_count == 0
     assert m.longest_pause_s is None
+
+
+def test_word_count_includes_digits() -> None:
+    # Whisper often writes spoken numbers as digits; they should count toward WPM.
+    m = compute_delivery_metrics("managed 3 teams", [], 2.0, [])
+    assert m.word_count == 3
+
+
+def test_word_count_keeps_contractions_intact() -> None:
+    # Apostrophes must not split contractions ("don't" is one word, not two).
+    m = compute_delivery_metrics("I don't know", [], 2.0, [])
+    assert m.word_count == 3
