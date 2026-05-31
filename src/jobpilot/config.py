@@ -50,6 +50,7 @@ class Settings(BaseSettings):
 
     score_threshold: int = 70
     retrieval_k: int = 8
+    smart_docx_ingest: bool = False
     log_format: LogFormat = "console"
 
 

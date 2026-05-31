@@ -29,6 +29,21 @@ class ProfileChunk(BaseModel):
     text: str = Field(..., min_length=1)
 
 
+class DocxSectionAssignment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    block_index: int = Field(..., ge=0)
+    heading_path: list[str] = Field(default_factory=list)
+    is_heading: bool = False
+    level: int = Field(default=0, ge=0)
+
+
+class DocxSectionNormalization(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    assignments: list[DocxSectionAssignment] = Field(default_factory=list)
+
+
 class EvaluationResult(BaseModel):
     score: int = Field(..., ge=0, le=100)
     decision: Decision

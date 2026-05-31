@@ -82,6 +82,7 @@ All personal info lives in `.env` (gitignored). Key variables:
 | `OLLAMA_BASE_URL` / `OLLAMA_EMBEDDING_MODEL` | `http://localhost:11434` / `nomic-embed-text` | Used when `EMBEDDING_PROVIDER=ollama`. |
 | `SCORE_THRESHOLD` | `70` | `jobpilot run` only writes a tailored CV when `evaluation.score ≥ this`. |
 | `RETRIEVAL_K` | `8` | Number of top-k profile chunks pulled from ChromaDB per query. |
+| `SMART_DOCX_INGEST` | `false` | Enable opt-in LLM fallback for low-confidence DOCX section parsing. Equivalent to `jobpilot ingest --smart-docx`. |
 
 ## Make targets
 

@@ -39,3 +39,13 @@ def test_settings_litellm_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     s = Settings(_env_file=None)  # type: ignore[call-arg]
     assert s.litellm_base_url == "http://localhost:4000/v1"
     assert s.litellm_api_key == "no-key"
+
+
+def test_settings_smart_docx_ingest_default_and_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("SMART_DOCX_INGEST", raising=False)
+    assert Settings(_env_file=None).smart_docx_ingest is False  # type: ignore[call-arg]
+
+    monkeypatch.setenv("SMART_DOCX_INGEST", "true")
+    assert Settings(_env_file=None).smart_docx_ingest is True  # type: ignore[call-arg]

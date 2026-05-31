@@ -66,13 +66,25 @@ def ingest(
     profile: Path | None = typer.Option(
         None, "--profile", help="Profile directory containing .docx files."
     ),
+    smart_docx: bool = typer.Option(
+        False,
+        "--smart-docx",
+        help="Allow LLM fallback to normalize low-confidence DOCX sections.",
+    ),
 ) -> None:
     """Ingest profile .docx files into the RAG store."""
     settings = get_settings()
     configure_logging(settings.log_format)
     profile_dir = profile or settings.profile_dir
     store = _build_store()
-    n = ingest_profile_dir(profile_dir, store=store)
+    use_smart_docx = smart_docx or settings.smart_docx_ingest
+    llm = LLMClient(settings=settings) if use_smart_docx else None
+    n = ingest_profile_dir(
+        profile_dir,
+        store=store,
+        smart_docx=use_smart_docx,
+        llm=llm,
+    )
     typer.echo(f"Ingested {n} chunks from {profile_dir} into {settings.chroma_dir}.")
 
 

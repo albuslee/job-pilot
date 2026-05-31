@@ -24,10 +24,12 @@ build/
 
 # Project
 data/profile/
+data/profile*/
 data/cv_template.docx
 data/bullet_pool.yaml
 output/
 .chroma/
+.chroma*/
 *.docx~
 
 # Personal planning docs — narrative + decision log, kept local
