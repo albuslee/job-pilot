@@ -38,8 +38,9 @@ def eval_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def _patch_pipeline(
     monkeypatch: pytest.MonkeyPatch, responses: dict[str, EvaluationResult]
 ) -> None:
-    """Replace build_graph + LLMClient + RagStore with stubs."""
+    """Replace build_graph + build_llm + RagStore with stubs."""
     from jobpilot import cli
+    from jobpilot.evals import runner as eval_runner
     from jobpilot.models.schemas import ProfileChunk
     from jobpilot.models.state import AgentState
 
@@ -68,13 +69,18 @@ def _patch_pipeline(
     monkeypatch.setattr(cli, "build_graph", _build_graph_stub)
     monkeypatch.setattr(cli, "_build_store", lambda: _StubStore())
 
-    # LLMClient needs record() to work as a context manager.
-    real_record = MagicMock()
-    real_record.__enter__ = MagicMock(return_value=[])
-    real_record.__exit__ = MagicMock(return_value=None)
+    # Patch build_llm to return a plain MagicMock (the graph stub never calls it).
     llm_stub = MagicMock()
-    llm_stub.record.return_value = real_record
-    monkeypatch.setattr(cli, "LLMClient", lambda *a, **kw: llm_stub)
+    monkeypatch.setattr(cli, "build_llm", lambda *a, **kw: llm_stub)
+
+    # Patch the standalone record() CM used in evals/runner.py so it yields an empty list.
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _stub_record(llm):  # type: ignore[no-untyped-def]
+        yield []
+
+    monkeypatch.setattr(eval_runner, "record", _stub_record)
 
 
 def test_eval_batch_writes_jsonl_and_report(

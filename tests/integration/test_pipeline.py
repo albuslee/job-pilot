@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from docx import Document
@@ -68,31 +68,36 @@ def test_run_writes_tailored_docx_when_score_above_threshold(
     pipeline_env: dict[str, Path],
 ) -> None:
     runner = CliRunner()
+
+    eval_result = EvaluationResult(
+        score=85,
+        decision="apply",
+        reasoning="Strong fullstack signals.",
+        cited_chunk_ids=[],
+        risk_flags=[],
+    )
+    tailor_result = TailoredCV(
+        target_company="Canva",
+        target_role="Senior Fullstack Engineer",
+        summary="Seven years on AWS serverless fullstack.",
+        skills_lines=[
+            "Languages: TypeScript, Python",
+            "AWS Serverless: Lambda, Step Functions",
+        ],
+        current_role_bullet_ids=["entry-b", "entry-a"],
+    )
+
+    mock_llm = MagicMock()
+    # Each call to with_structured_output(schema) returns a chain whose .invoke() pops from queue.
+    responses = [eval_result, tailor_result]
+    mock_chain = MagicMock()
+    mock_chain.invoke.side_effect = responses
+    mock_llm.with_structured_output.return_value = mock_chain
+
     with (
         patch("jobpilot.cli.build_embedder", return_value=_fake_embedder()),
-        patch("jobpilot.cli.LLMClient") as mock_client_cls,
+        patch("jobpilot.cli.build_llm", return_value=mock_llm),
     ):
-        instance = mock_client_cls.return_value
-        instance.complete_structured.side_effect = [
-            EvaluationResult(
-                score=85,
-                decision="apply",
-                reasoning="Strong fullstack signals.",
-                cited_chunk_ids=[],
-                risk_flags=[],
-            ),
-            TailoredCV(
-                target_company="Canva",
-                target_role="Senior Fullstack Engineer",
-                summary="Seven years on AWS serverless fullstack.",
-                skills_lines=[
-                    "Languages: TypeScript, Python",
-                    "AWS Serverless: Lambda, Step Functions",
-                ],
-                current_role_bullet_ids=["entry-b", "entry-a"],
-            ),
-        ]
-
         ingest = runner.invoke(app, ["ingest"])
         assert ingest.exit_code == 0, ingest.stdout
 
@@ -120,18 +125,20 @@ def test_run_skips_tailoring_when_score_below_threshold(
     pipeline_env: dict[str, Path],
 ) -> None:
     runner = CliRunner()
+
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output.return_value.invoke.return_value = EvaluationResult(
+        score=35,
+        decision="skip",
+        reasoning="Mismatch on domain.",
+        cited_chunk_ids=[],
+        risk_flags=["no cardiology background"],
+    )
+
     with (
         patch("jobpilot.cli.build_embedder", return_value=_fake_embedder()),
-        patch("jobpilot.cli.LLMClient") as mock_client_cls,
+        patch("jobpilot.cli.build_llm", return_value=mock_llm),
     ):
-        mock_client_cls.return_value.complete_structured.return_value = EvaluationResult(
-            score=35,
-            decision="skip",
-            reasoning="Mismatch on domain.",
-            cited_chunk_ids=[],
-            risk_flags=["no cardiology background"],
-        )
-
         runner.invoke(app, ["ingest"])
         result = runner.invoke(app, ["run", str(pipeline_env["jd"])])
         assert result.exit_code == 0, result.stdout

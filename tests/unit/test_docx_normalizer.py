@@ -14,8 +14,7 @@ def test_normalize_docx_sections_preserves_text_and_uses_block_indices() -> None
         ),
         RawDocxBlock(index=1, text="Python, TypeScript", style_name="Normal", source="paragraph"),
     ]
-    llm = MagicMock()
-    llm.complete_structured.return_value = DocxSectionNormalization(
+    expected = DocxSectionNormalization(
         assignments=[
             DocxSectionAssignment(
                 block_index=0,
@@ -31,12 +30,14 @@ def test_normalize_docx_sections_preserves_text_and_uses_block_indices() -> None
             ),
         ]
     )
+    llm = MagicMock()
+    llm.with_structured_output.return_value.invoke.return_value = expected
 
     blocks = normalize_docx_sections(raw_blocks, llm=llm)
 
     assert [b.text for b in blocks] == ["Cloud systems builder", "Python, TypeScript"]
     assert blocks[0].heading_path == ["Summary"]
     assert blocks[1].heading_path == ["Skills"]
-    kwargs = llm.complete_structured.call_args.kwargs
-    assert kwargs["schema"] is DocxSectionNormalization
-    assert kwargs["tool_name"] == "submit_docx_section_normalization"
+    llm.with_structured_output.assert_called_once_with(
+        DocxSectionNormalization, method="function_calling"
+    )

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from jobpilot.agents.tailor import TailorAgent
 from jobpilot.config import Settings
@@ -26,6 +26,12 @@ def _pool() -> BulletPool:
     )
 
 
+def _make_llm(result: TailoredCV) -> MagicMock:
+    llm = MagicMock()
+    llm.with_structured_output.return_value.invoke.return_value = result
+    return llm
+
+
 @pytest.mark.asyncio
 async def test_tailor_populates_state(settings: Settings) -> None:
     chunks = [
@@ -45,8 +51,7 @@ async def test_tailor_populates_state(settings: Settings) -> None:
     rag = MagicMock()
     rag.query.return_value = chunks
 
-    llm = MagicMock()
-    llm.complete_structured.return_value = TailoredCV(
+    expected = TailoredCV(
         target_company="Canva",
         target_role="Senior Fullstack Engineer",
         summary="Seven years of fullstack delivery on AWS, shipping RAG pipelines.",
@@ -56,6 +61,7 @@ async def test_tailor_populates_state(settings: Settings) -> None:
         ],
         current_role_bullet_ids=["entry-b", "entry-a"],
     )
+    llm = _make_llm(expected)
 
     agent = TailorAgent(settings=settings, llm=llm, rag=rag, pool=_pool())
     state: AgentState = {
@@ -69,27 +75,30 @@ async def test_tailor_populates_state(settings: Settings) -> None:
     assert out["tailored"].current_role_bullet_ids == ["entry-b", "entry-a"]
     assert out["retrieved"] == chunks
     rag.query.assert_called_once()
-    call_kwargs: dict[str, Any] = llm.complete_structured.call_args.kwargs
-    assert call_kwargs["schema"] is TailoredCV
-    assert call_kwargs["tool_name"] == "submit_tailored_cv"
-    # Pool must be rendered into the prompt so the LLM knows which IDs exist.
-    assert "[entry-a]" in call_kwargs["user"] or "[entry-a]" in call_kwargs["cached_context"]
+
+    llm.with_structured_output.assert_called_once_with(TailoredCV)
+    invoke_call = llm.with_structured_output.return_value.invoke.call_args
+    messages = invoke_call.args[0]
+    assert isinstance(messages[0], SystemMessage)
+    # Pool IDs must appear somewhere in the messages so the LLM knows which IDs exist
+    all_content = " ".join(m.content for m in messages if isinstance(m, (HumanMessage, AIMessage)))
+    assert "[entry-a]" in all_content
 
 
 @pytest.mark.asyncio
 async def test_tailor_reuses_existing_retrieved_chunks(settings: Settings) -> None:
-    """If the evaluator already retrieved, the tailor MUST NOT requery."""
     existing = [
         ProfileChunk(id="x", source="cv.docx", heading_path=[], text="prior chunk"),
     ]
     rag = MagicMock()
-    llm = MagicMock()
-    llm.complete_structured.return_value = TailoredCV(
-        target_company="X",
-        target_role="Y",
-        summary="z",
-        skills_lines=["a"],
-        current_role_bullet_ids=["entry-a"],
+    llm = _make_llm(
+        TailoredCV(
+            target_company="X",
+            target_role="Y",
+            summary="z",
+            skills_lines=["a"],
+            current_role_bullet_ids=["entry-a"],
+        )
     )
 
     agent = TailorAgent(settings=settings, llm=llm, rag=rag, pool=_pool())
@@ -104,16 +113,16 @@ async def test_tailor_reuses_existing_retrieved_chunks(settings: Settings) -> No
 
 @pytest.mark.asyncio
 async def test_tailor_rejects_unknown_bullet_id(settings: Settings) -> None:
-    """If the LLM hallucinates a bullet id, the agent MUST raise — not silently render."""
     rag = MagicMock()
     rag.query.return_value = []
-    llm = MagicMock()
-    llm.complete_structured.return_value = TailoredCV(
-        target_company="X",
-        target_role="Y",
-        summary="z",
-        skills_lines=["a"],
-        current_role_bullet_ids=["entry-a", "entry-fake-hallucinated"],
+    llm = _make_llm(
+        TailoredCV(
+            target_company="X",
+            target_role="Y",
+            summary="z",
+            skills_lines=["a"],
+            current_role_bullet_ids=["entry-a", "entry-fake-hallucinated"],
+        )
     )
 
     agent = TailorAgent(settings=settings, llm=llm, rag=rag, pool=_pool())

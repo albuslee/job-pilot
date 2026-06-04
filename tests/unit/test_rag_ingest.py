@@ -117,7 +117,7 @@ def test_ingest_smart_docx_uses_llm_fallback_for_low_confidence_docx(
     doc.save(profile / "cv.docx")
 
     llm = MagicMock()
-    llm.complete_structured.return_value = DocxSectionNormalization(
+    llm.with_structured_output.return_value.invoke.return_value = DocxSectionNormalization(
         assignments=[
             DocxSectionAssignment(block_index=0, heading_path=["Summary"]),
             DocxSectionAssignment(block_index=1, heading_path=["Skills"]),
@@ -128,7 +128,7 @@ def test_ingest_smart_docx_uses_llm_fallback_for_low_confidence_docx(
     n = ingest_profile_dir(profile, store=store, smart_docx=True, llm=llm)
 
     assert n == 2
-    llm.complete_structured.assert_called_once()
+    llm.with_structured_output.assert_called_once()
     assert [c.heading_path for c in store.chunks] == [["Summary"], ["Skills"]]
 
 
@@ -140,7 +140,7 @@ def test_ingest_smart_docx_uses_llm_fallback_for_complex_unstyled_docx(
     _write_complex_unstyled_cv(profile / "cv.docx")
 
     llm = MagicMock()
-    llm.complete_structured.return_value = DocxSectionNormalization(
+    llm.with_structured_output.return_value.invoke.return_value = DocxSectionNormalization(
         assignments=[
             DocxSectionAssignment(block_index=0, heading_path=[]),
             DocxSectionAssignment(block_index=1, heading_path=[]),
@@ -152,7 +152,7 @@ def test_ingest_smart_docx_uses_llm_fallback_for_complex_unstyled_docx(
 
     ingest_profile_dir(profile, store=store, smart_docx=True, llm=llm)
 
-    llm.complete_structured.assert_called_once()
+    llm.with_structured_output.assert_called_once()
 
 
 def test_ingest_smart_docx_skips_llm_when_parse_confidence_is_high(

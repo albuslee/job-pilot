@@ -1,29 +1,21 @@
-"""LLM-assisted DOCX section normalization.
-
-The model only returns block-index metadata. Original DOCX text always comes
-from RawDocxBlock, so normalization cannot rewrite the user's CV content.
-"""
+"""LLM-assisted DOCX section normalization."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
 
 from jobpilot.models.schemas import DocxSectionAssignment, DocxSectionNormalization
 from jobpilot.prompts.loader import PromptLoader
 from jobpilot.tools.docx_reader import DocxBlock, RawDocxBlock
 
-_TOOL_NAME = "submit_docx_section_normalization"
-_TOOL_DESCRIPTION = (
-    "Assign each DOCX text block to a CV section heading path. "
-    "Reference blocks by index only; do not rewrite any source text."
-)
-
 
 def normalize_docx_sections(
     raw_blocks: list[RawDocxBlock],
     *,
-    llm: Any,
+    llm: ChatOpenAI,
     prompts: PromptLoader | None = None,
     prompt_version: str = "v1",
 ) -> list[DocxBlock]:
@@ -33,15 +25,10 @@ def normalize_docx_sections(
         prompt_version,
         variables={"raw_blocks": _format_raw_blocks(raw_blocks)},
     )
-    normalization = llm.complete_structured(
-        system=prompt.system,
-        user=prompt.user,
-        cached_context=None,
-        schema=DocxSectionNormalization,
-        tool_name=_TOOL_NAME,
-        tool_description=_TOOL_DESCRIPTION,
-        max_tokens=2048,
-    )
+    messages = [SystemMessage(prompt.system), HumanMessage(prompt.user)]
+    normalization: DocxSectionNormalization = llm.with_structured_output(
+        DocxSectionNormalization, method="function_calling"
+    ).invoke(messages)
     return apply_docx_section_normalization(raw_blocks, normalization)
 
 

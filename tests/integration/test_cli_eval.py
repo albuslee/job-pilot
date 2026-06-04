@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from docx import Document
@@ -49,17 +49,21 @@ def test_cli_version() -> None:
 
 def test_cli_ingest_then_eval(cli_env: Path) -> None:
     runner = CliRunner()
+
+    expected_result = EvaluationResult(
+        score=82,
+        decision="apply",
+        reasoning="Strong RAG + fullstack signals.",
+        cited_chunk_ids=[],
+        risk_flags=[],
+    )
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output.return_value.invoke.return_value = expected_result
+
     with (
         patch("jobpilot.cli.build_embedder", return_value=_fake_embedder()),
-        patch("jobpilot.cli.AnthropicClient") as mock_client_cls,
+        patch("jobpilot.cli.build_llm", return_value=mock_llm),
     ):
-        mock_client_cls.return_value.complete_structured.return_value = EvaluationResult(
-            score=82,
-            decision="apply",
-            reasoning="Strong RAG + fullstack signals.",
-            cited_chunk_ids=[],
-            risk_flags=[],
-        )
         ingest = runner.invoke(app, ["ingest"])
         assert ingest.exit_code == 0, ingest.stdout
         assert "ingested" in ingest.stdout.lower()

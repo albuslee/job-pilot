@@ -13,7 +13,7 @@ from jobpilot.agents.evaluator import EvaluatorAgent
 from jobpilot.agents.orchestrator import build_graph
 from jobpilot.agents.tailor import TailorAgent
 from jobpilot.config import get_settings
-from jobpilot.llm.client import LLMClient
+from jobpilot.llm.client import build_llm
 from jobpilot.logging_setup import configure_logging, get_logger
 from jobpilot.models.schemas import JobDescription
 from jobpilot.models.state import AgentState
@@ -27,9 +27,6 @@ from jobpilot.tools.linkedin_jd import (
     fetch_linkedin_job,
     write_job_description,
 )
-
-# Backwards-compat alias kept so existing tests that patch `jobpilot.cli.AnthropicClient` still work.
-AnthropicClient = LLMClient
 
 app = typer.Typer(
     help="JobPilot — RAG-grounded job evaluation + CV tailoring.", no_args_is_help=True
@@ -78,7 +75,7 @@ def ingest(
     profile_dir = profile or settings.profile_dir
     store = _build_store()
     use_smart_docx = smart_docx or settings.smart_docx_ingest
-    llm = LLMClient(settings=settings) if use_smart_docx else None
+    llm = build_llm(settings) if use_smart_docx else None
     n = ingest_profile_dir(
         profile_dir,
         store=store,
@@ -97,7 +94,7 @@ def evaluate_cmd(
     configure_logging(settings.log_format)
     jd = JobDescription(source=jd_path.name, body=jd_path.read_text(encoding="utf-8"))
     store = _build_store()
-    llm = AnthropicClient(settings=settings)
+    llm = build_llm(settings)
     agent = EvaluatorAgent(settings=settings, llm=llm, rag=store)
     state: AgentState = {"job": jd}
 
@@ -159,7 +156,7 @@ def scrape_eval_cmd(
 
     jd = JobDescription(source=jd_path.name, body=jd_path.read_text(encoding="utf-8"))
     store = _build_store()
-    llm = LLMClient(settings=settings)
+    llm = build_llm(settings)
     agent = EvaluatorAgent(settings=settings, llm=llm, rag=store)
     state: AgentState = {"job": jd}
 
@@ -194,7 +191,7 @@ def run_cmd(
 
     pool = load_bullet_pool(settings.bullet_pool_path)
     store = _build_store()
-    llm = LLMClient(settings=settings)
+    llm = build_llm(settings)
     evaluator = EvaluatorAgent(settings=settings, llm=llm, rag=store)
     tailor = TailorAgent(settings=settings, llm=llm, rag=store, pool=pool)
     graph = build_graph(settings=settings, evaluator=evaluator, tailor=tailor)
@@ -280,7 +277,7 @@ def eval_batch_cmd(
     prices = load_prices(prices_path) if prices_path.exists() else None
 
     store = _build_store()
-    llm = LLMClient(settings=settings)
+    llm = build_llm(settings)
     evaluator = EvaluatorAgent(settings=settings, llm=llm, rag=store, prompt_version=prompt_version)
     if with_tailor:
         pool = load_bullet_pool(settings.bullet_pool_path)

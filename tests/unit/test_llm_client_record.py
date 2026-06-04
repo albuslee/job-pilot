@@ -1,53 +1,31 @@
 from __future__ import annotations
 
-import json
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from langchain_core.messages import AIMessage
 
 from jobpilot.config import Settings
-from jobpilot.llm.client import CallTelemetry, LLMClient
-from jobpilot.models.schemas import EvaluationResult
+from jobpilot.llm.client import CallTelemetry, build_llm, record
 
 
-def _fake_response(payload: dict[str, Any], in_tok: int, out_tok: int) -> MagicMock:
-    """Mirror the existing test fakes in test_llm_client.py but include usage."""
-    response = MagicMock()
-    tool_call = MagicMock()
-    tool_call.function.name = "submit_evaluation"
-    tool_call.function.arguments = json.dumps(payload)
-    response.choices = [MagicMock()]
-    response.choices[0].message.tool_calls = [tool_call]
-    response.usage.prompt_tokens = in_tok
-    response.usage.completion_tokens = out_tok
-    return response
-
-
-def _payload() -> dict[str, Any]:
-    return {
-        "score": 50,
-        "decision": "maybe",
-        "reasoning": "ok",
-        "cited_chunk_ids": [],
-        "risk_flags": [],
-    }
+def _fake_llm(settings: Settings, *, in_tok: int = 100, out_tok: int = 20) -> MagicMock:
+    """Return a real ChatOpenAI whose .invoke() is replaced with a mock that returns
+    an AIMessage with usage_metadata."""
+    llm = build_llm(settings)
+    response = AIMessage(content="ok")
+    response.usage_metadata = {"input_tokens": in_tok, "output_tokens": out_tok}  # type: ignore[assignment]
+    # ChatOpenAI is a Pydantic model — direct attribute assignment is blocked.
+    # Writing into __dict__ bypasses the guard while still shadowing the class method.
+    llm.__dict__["invoke"] = MagicMock(return_value=response)  # type: ignore[index]
+    return llm  # type: ignore[return-value]
 
 
 def test_record_captures_token_counts_and_latency(settings: Settings) -> None:
-    sdk = MagicMock()
-    sdk.chat.completions.create.return_value = _fake_response(_payload(), 100, 20)
-    client = LLMClient(settings=settings, sdk=sdk)
+    llm = _fake_llm(settings, in_tok=100, out_tok=20)
 
-    with client.record() as calls:
-        client.complete_structured(
-            system="s",
-            user="u",
-            cached_context=None,
-            schema=EvaluationResult,
-            tool_name="submit_evaluation",
-            tool_description="d",
-        )
+    with record(llm) as calls:
+        llm.invoke("hello")
 
     assert len(calls) == 1
     t = calls[0]
@@ -55,57 +33,36 @@ def test_record_captures_token_counts_and_latency(settings: Settings) -> None:
     assert t.model == settings.llm_model
     assert t.input_tokens == 100
     assert t.output_tokens == 20
-    assert t.latency_ms >= 0  # real wall time
+    assert t.latency_ms >= 0
 
 
 def test_record_accumulates_multiple_calls(settings: Settings) -> None:
-    sdk = MagicMock()
-    sdk.chat.completions.create.side_effect = [
-        _fake_response(_payload(), 100, 20),
-        _fake_response(_payload(), 200, 30),
-    ]
-    client = LLMClient(settings=settings, sdk=sdk)
+    llm = build_llm(settings)
+    r1 = AIMessage(content="a")
+    r1.usage_metadata = {"input_tokens": 100, "output_tokens": 20}  # type: ignore[assignment]
+    r2 = AIMessage(content="b")
+    r2.usage_metadata = {"input_tokens": 200, "output_tokens": 30}  # type: ignore[assignment]
+    llm.__dict__["invoke"] = MagicMock(side_effect=[r1, r2])  # type: ignore[index]
 
-    with client.record() as calls:
-        for _ in range(2):
-            client.complete_structured(
-                system="s",
-                user="u",
-                cached_context=None,
-                schema=EvaluationResult,
-                tool_name="submit_evaluation",
-                tool_description="d",
-            )
+    with record(llm) as calls:
+        llm.invoke("a")
+        llm.invoke("b")
 
     assert [(c.input_tokens, c.output_tokens) for c in calls] == [(100, 20), (200, 30)]
 
 
 def test_record_isolates_blocks(settings: Settings) -> None:
-    sdk = MagicMock()
-    sdk.chat.completions.create.side_effect = [
-        _fake_response(_payload(), 100, 20),
-        _fake_response(_payload(), 200, 30),
-    ]
-    client = LLMClient(settings=settings, sdk=sdk)
+    llm = build_llm(settings)
+    r1 = AIMessage(content="a")
+    r1.usage_metadata = {"input_tokens": 100, "output_tokens": 20}  # type: ignore[assignment]
+    r2 = AIMessage(content="b")
+    r2.usage_metadata = {"input_tokens": 200, "output_tokens": 30}  # type: ignore[assignment]
+    llm.__dict__["invoke"] = MagicMock(side_effect=[r1, r2])  # type: ignore[index]
 
-    with client.record() as a:
-        client.complete_structured(
-            system="s",
-            user="u",
-            cached_context=None,
-            schema=EvaluationResult,
-            tool_name="submit_evaluation",
-            tool_description="d",
-        )
-    with client.record() as b:
-        client.complete_structured(
-            system="s",
-            user="u",
-            cached_context=None,
-            schema=EvaluationResult,
-            tool_name="submit_evaluation",
-            tool_description="d",
-        )
+    with record(llm) as a:
+        llm.invoke("a")
+    with record(llm) as b:
+        llm.invoke("b")
 
     assert len(a) == 1 and len(b) == 1
     assert a[0].input_tokens == 100
@@ -113,57 +70,31 @@ def test_record_isolates_blocks(settings: Settings) -> None:
 
 
 def test_record_outside_block_does_not_record(settings: Settings) -> None:
-    sdk = MagicMock()
-    sdk.chat.completions.create.return_value = _fake_response(_payload(), 100, 20)
-    client = LLMClient(settings=settings, sdk=sdk)
-    # No exception, and no recording state lingers.
-    client.complete_structured(
-        system="s",
-        user="u",
-        cached_context=None,
-        schema=EvaluationResult,
-        tool_name="submit_evaluation",
-        tool_description="d",
-    )
-    with client.record() as calls:
-        client.complete_structured(
-            system="s",
-            user="u",
-            cached_context=None,
-            schema=EvaluationResult,
-            tool_name="submit_evaluation",
-            tool_description="d",
-        )
-    assert len(calls) == 1  # not 2 — first call was before record() started
+    llm = _fake_llm(settings, in_tok=100, out_tok=20)
 
+    llm.invoke("before block — should not be recorded")
 
-def test_record_rejects_nested_entry(settings: Settings) -> None:
-    sdk = MagicMock()
-    client = LLMClient(settings=settings, sdk=sdk)
-    with client.record():  # noqa: SIM117
-        with pytest.raises(RuntimeError, match="nested"):
-            with client.record():
-                pass
+    with record(llm) as calls:
+        llm.invoke("inside block")
 
-
-def test_record_resets_state_after_exception(settings: Settings) -> None:
-    sdk = MagicMock()
-    sdk.chat.completions.create.return_value = _fake_response(_payload(), 100, 20)
-    client = LLMClient(settings=settings, sdk=sdk)
-
-    # First block raises mid-way; the finally must reset state.
-    with pytest.raises(ValueError, match="boom"):  # noqa: SIM117
-        with client.record():
-            raise ValueError("boom")
-
-    # Second block must work, proving state was cleaned up.
-    with client.record() as calls:
-        client.complete_structured(
-            system="s",
-            user="u",
-            cached_context=None,
-            schema=EvaluationResult,
-            tool_name="submit_evaluation",
-            tool_description="d",
-        )
     assert len(calls) == 1
+
+
+def test_record_restores_original_invoke_after_exception(settings: Settings) -> None:
+    llm = _fake_llm(settings)
+    original = llm.invoke
+
+    with pytest.raises(ValueError, match="boom"), record(llm):
+        raise ValueError("boom")
+
+    assert llm.invoke is original
+
+
+def test_record_restores_original_invoke_on_success(settings: Settings) -> None:
+    llm = _fake_llm(settings)
+    original = llm.invoke
+
+    with record(llm):
+        llm.invoke("hi")
+
+    assert llm.invoke is original

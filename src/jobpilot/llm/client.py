@@ -1,48 +1,20 @@
-"""LLM client backed by any OpenAI-compatible gateway (e.g. LiteLLM).
-
-Owns:
-- structured output: a single tool call whose parameters schema is a Pydantic model.
-- retries: tenacity exponential backoff on transient errors.
-
-Note: Anthropic-style prompt caching is not forwarded — LiteLLM handles caching
-at the gateway level based on its own configuration.
-"""
+"""LLM client: factory and telemetry helpers for LangChain ChatOpenAI."""
 
 from __future__ import annotations
 
-import json
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, TypeVar
 
-from openai import APIConnectionError, APIStatusError, OpenAI, RateLimitError
-from pydantic import BaseModel
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
+from langchain_openai import ChatOpenAI
 
 from jobpilot.config import Settings
-from jobpilot.logging_setup import get_logger
-
-T = TypeVar("T", bound=BaseModel)
-log = get_logger(__name__)
-
-
-class StructuredOutputError(RuntimeError):
-    """Raised when the model fails to emit the expected tool call."""
-
-
-_RETRY_EXC = (APIConnectionError, RateLimitError, APIStatusError)
 
 
 @dataclass(frozen=True)
 class CallTelemetry:
-    """Per-LLM-call usage and latency, captured by LLMClient.record()."""
+    """Per-LLM-call usage and latency."""
 
     model: str
     input_tokens: int
@@ -50,92 +22,58 @@ class CallTelemetry:
     latency_ms: float
 
 
-class LLMClient:
-    def __init__(self, *, settings: Settings, sdk: Any | None = None) -> None:
-        self._settings = settings
-        self._sdk: Any = sdk or OpenAI(
-            base_url=settings.litellm_base_url,
-            api_key=settings.litellm_api_key,
-        )
-        self._active_recording: list[CallTelemetry] | None = None
-
-    @contextmanager
-    def record(self) -> Iterator[list[CallTelemetry]]:
-        """Capture per-call telemetry for the duration of the block.
-
-        Nested entry is not supported and raises RuntimeError.
-        """
-        if self._active_recording is not None:
-            raise RuntimeError("LLMClient.record() blocks cannot be nested")
-        bucket: list[CallTelemetry] = []
-        self._active_recording = bucket
-        try:
-            yield bucket
-        finally:
-            self._active_recording = None
-
-    @retry(
-        retry=retry_if_exception_type(_RETRY_EXC),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        stop=stop_after_attempt(4),
-        reraise=True,
+def build_llm(settings: Settings) -> ChatOpenAI:
+    """Return a ChatOpenAI instance pointed at the LiteLLM gateway."""
+    return ChatOpenAI(
+        model=settings.llm_model,
+        base_url=settings.litellm_base_url,
+        api_key=settings.litellm_api_key,
+        max_retries=3,
+        max_tokens=2048,
     )
-    def complete_structured(
-        self,
-        *,
-        system: str,
-        user: str,
-        cached_context: str | None,
-        schema: type[T],
-        tool_name: str,
-        tool_description: str,
-        max_tokens: int = 2048,
-    ) -> T:
-        """Force the model to emit a single tool call whose input parses into `schema`."""
-        messages: list[dict[str, Any]] = [{"role": "system", "content": system}]
-        if cached_context:
-            messages.append({"role": "user", "content": cached_context})
-            messages.append({"role": "assistant", "content": "Understood."})
-        messages.append({"role": "user", "content": user})
 
-        tool: dict[str, Any] = {
-            "type": "function",
-            "function": {
-                "name": tool_name,
-                "description": tool_description,
-                "parameters": schema.model_json_schema(),
-            },
-        }
 
-        log.debug("llm.request", model=self._settings.llm_model, tool=tool_name)
+@contextmanager
+def record(llm: ChatOpenAI) -> Iterator[list[CallTelemetry]]:
+    """Context manager that captures CallTelemetry for every .invoke() call made
+    on `llm` while the block is active.
+
+    Intercepts calls on the `llm` instance itself. Wrap the block that drives
+    graph execution — telemetry is captured whenever the graph calls `llm.invoke`
+    internally::
+
+        with record(llm) as calls:
+            await graph.ainvoke(state)
+        print(calls[0].input_tokens)
+    """
+    bucket: list[CallTelemetry] = []
+    model_name = llm.model_name
+
+    # Capture what's in the instance dict now (may be a prior mock, or absent).
+    _missing = object()
+    prior_instance_invoke = llm.__dict__.get("invoke", _missing)
+    original_invoke = llm.invoke  # bound method or instance override — used to call through
+
+    def _instrumented_invoke(input, config=None, **kwargs):  # type: ignore[no-untyped-def]
         t0 = time.monotonic()
-        response = self._sdk.chat.completions.create(
-            model=self._settings.llm_model,
-            max_tokens=max_tokens,
-            messages=messages,
-            tools=[tool],
-            tool_choice={"type": "function", "function": {"name": tool_name}},
-        )
+        response = original_invoke(input, config, **kwargs)
         latency_ms = (time.monotonic() - t0) * 1000.0
-
-        if self._active_recording is not None:
-            usage = getattr(response, "usage", None)
-            self._active_recording.append(
-                CallTelemetry(
-                    model=self._settings.llm_model,
-                    input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
-                    output_tokens=getattr(usage, "completion_tokens", 0) or 0,
-                    latency_ms=latency_ms,
-                )
+        usage = getattr(response, "usage_metadata", None) or {}
+        bucket.append(
+            CallTelemetry(
+                model=model_name,
+                input_tokens=usage.get("input_tokens", 0),
+                output_tokens=usage.get("output_tokens", 0),
+                latency_ms=latency_ms,
             )
+        )
+        return response
 
-        tool_calls = getattr(response.choices[0].message, "tool_calls", None)
-        if tool_calls:
-            payload = json.loads(tool_calls[0].function.arguments)
-            return schema.model_validate(payload)
-
-        raise StructuredOutputError(f"Model did not return a `{tool_name}` tool call.")
-
-
-# Backwards-compatible alias
-AnthropicClient = LLMClient
+    llm.__dict__["invoke"] = _instrumented_invoke  # type: ignore[index]
+    try:
+        yield bucket
+    finally:
+        if prior_instance_invoke is _missing:
+            llm.__dict__.pop("invoke", None)  # type: ignore[union-attr]
+        else:
+            llm.__dict__["invoke"] = prior_instance_invoke  # type: ignore[index]

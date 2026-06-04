@@ -6,6 +6,8 @@ import time
 from datetime import UTC, datetime
 from typing import Protocol
 
+from langchain_openai import ChatOpenAI
+
 from jobpilot.evals.fixtures import EvalCase
 from jobpilot.evals.metrics import (
     ActualOutcome,
@@ -16,7 +18,7 @@ from jobpilot.evals.metrics import (
     score_case,
 )
 from jobpilot.evals.pricing import PriceTable, cost
-from jobpilot.llm.client import CallTelemetry, LLMClient
+from jobpilot.llm.client import CallTelemetry, record
 from jobpilot.logging_setup import get_logger
 from jobpilot.models.state import AgentState
 
@@ -35,7 +37,7 @@ async def run_batch(
     *,
     cases: list[EvalCase],
     graph: _GraphLike,
-    llm: LLMClient,
+    llm: ChatOpenAI,
     prompt_version: str,
     model: str,
     prices: PriceTable | None = None,
@@ -47,7 +49,7 @@ async def run_batch(
         t0 = time.monotonic()
         calls: list[CallTelemetry] = []
         try:
-            with llm.record() as recorded:
+            with record(llm) as recorded:
                 calls = recorded  # bind ref BEFORE any work; list is mutated in place
                 state: AgentState = {"job": case.jd}
                 out = await graph.ainvoke(state)
